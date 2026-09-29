@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MSTest.Packaging.AssemblyResolution": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "TESTINGPLATFORM_DIAGNOSTIC": "1"
+      }
+    }
+  }
+}

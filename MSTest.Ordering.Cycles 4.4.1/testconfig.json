@@ -1,0 +1,28 @@
+{
+  "commandLineOptions": {
+    "filter": "TestCategory!=DependencyCycle"
+  },
+  "mstest": {
+    "execution": {
+      "dependencies": {
+        "chains": [
+          [
+            "MSTest.Ordering.Cycles.ConfiguredCycleShowcase.Lock",
+            "MSTest.Ordering.Cycles.ConfiguredCycleShowcase.Unlock",
+            "MSTest.Ordering.Cycles.ConfiguredCycleShowcase.Lock"
+          ]
+        ],
+        "nodes": [
+          {
+            "test": "MSTest.Ordering.Cycles.ConfiguredCycleShowcase.Neither_test_of_the_cycle_ran",
+            "dependsOn": [
+              "MSTest.Ordering.Cycles.ConfiguredCycleShowcase.Lock",
+              "MSTest.Ordering.Cycles.ConfiguredCycleShowcase.Unlock"
+            ],
+            "proceedOnFailure": true
+          }
+        ]
+      }
+    }
+  }
+}

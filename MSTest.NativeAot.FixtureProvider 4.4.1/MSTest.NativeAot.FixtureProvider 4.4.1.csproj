@@ -1,0 +1,12 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.NativeAot.FixtureProvider</RootNamespace>
+        <PublishAot>true</PublishAot>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\MSTest.SourceGeneration.Library 4.4.1\MSTest.SourceGeneration.Library 4.4.1.csproj"/>
+    </ItemGroup>
+
+</Project>

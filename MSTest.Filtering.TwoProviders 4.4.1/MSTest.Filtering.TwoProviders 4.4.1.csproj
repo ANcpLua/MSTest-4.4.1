@@ -1,0 +1,9 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Filtering.TwoProviders</RootNamespace>
+        <IsTestApplication>false</IsTestApplication>
+        <NoWarn>$(NoWarn);MSTESTEXP</NoWarn>
+    </PropertyGroup>
+
+</Project>

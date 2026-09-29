@@ -1,0 +1,7 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Packaging</RootNamespace>
+    </PropertyGroup>
+
+</Project>

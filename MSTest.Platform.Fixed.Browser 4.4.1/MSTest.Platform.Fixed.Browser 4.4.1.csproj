@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Platform.Fixed.Browser</RootNamespace>
+        <OutputType>Exe</OutputType>
+        <EnableMSTestRunner>true</EnableMSTestRunner>
+        <!-- Hot reload loads a module of the browser dev server, which the JavaScript host does not serve. -->
+        <WasmEnableHotReload>false</WasmEnableHotReload>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MSTest.TestAdapter" Version="4.4.1"/>
+        <PackageReference Include="MSTest.TestFramework" Version="4.4.1"/>
+        <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.4.1"/>
+        <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.4.1"/>
+    </ItemGroup>
+
+    <!-- The boot module lies next to _framework in the output folder, and dotnet run starts it under the
+         JavaScript host bun instead of the browser dev server. -->
+    <ItemGroup>
+        <Content Update="wwwroot\main.mjs" CopyToOutputDirectory="PreserveNewest"/>
+    </ItemGroup>
+
+    <Target Name="RunUnderJavaScriptHost" AfterTargets="ComputeRunArguments">
+        <PropertyGroup>
+            <RunCommand>bun</RunCommand>
+            <RunArguments>main.mjs</RunArguments>
+            <RunWorkingDirectory>$(OutDir)wwwroot</RunWorkingDirectory>
+        </PropertyGroup>
+    </Target>
+
+</Project>

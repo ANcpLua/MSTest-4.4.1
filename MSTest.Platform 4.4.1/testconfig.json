@@ -1,0 +1,11 @@
+{
+  "showcase": {
+    "carrier": {
+      "name": "Seapost"
+    },
+    "reports": {
+      "formats": [ "trx", "ctrf" ],
+      "keep": 30
+    }
+  }
+}

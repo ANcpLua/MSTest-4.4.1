@@ -1,0 +1,58 @@
+# Opens one pull request per new MSTest release. The pull request is the notification and carries
+# the API delta under delta/<version>/; it changes no pin and no example.
+name: scout
+
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+    inputs:
+      to:
+        description: Version to scout. Empty takes the newest stable release with a patch number of 1 or higher.
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: scout
+  cancel-in-progress: false
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Compare the pinned version with the newest release
+        id: delta
+        env:
+          TO: ${{ inputs.to }}
+        run: python3 scripts/scout.py ${TO:+--to "$TO"}
+
+      - name: Open the scouting pull request
+        if: steps.delta.outputs.to != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FROM: ${{ steps.delta.outputs.from }}
+          TO: ${{ steps.delta.outputs.to }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          branch="scout/mstest-$TO"
+          if git ls-remote --exit-code --heads origin "$branch" > /dev/null; then
+            echo "The branch $branch exists: MSTest $TO was scouted before."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create "$branch"
+          git add "delta/$TO"
+          git commit --message "MSTest $TO: API delta from $FROM"
+          git push origin "$branch"
+          gh pr create --base "${{ github.event.repository.default_branch }}" --head "$branch" \
+            --title "MSTest $TO is out: API delta from $FROM" \
+            --body-file "delta/$TO/summary.md" \
+            --assignee "$OWNER"

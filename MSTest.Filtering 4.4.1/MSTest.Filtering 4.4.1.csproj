@@ -1,0 +1,8 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Filtering</RootNamespace>
+        <NoWarn>$(NoWarn);MSTESTEXP</NoWarn>
+    </PropertyGroup>
+
+</Project>

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Analyzers.CurrentBase</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MSTest.TestFramework" Version="4.4.1"/>
+    </ItemGroup>
+
+</Project>

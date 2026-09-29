@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>MSTest.Platform.AotClient</RootNamespace>
+        <PublishAot>true</PublishAot>
+    </PropertyGroup>
+
+    <!-- The client is source code compiled into this executable: the package adds no assembly and no dependency. -->
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Testing.Platform.ServerMode.Client.Sources" Version="2.4.1" PrivateAssets="all"/>
+    </ItemGroup>
+
+</Project>

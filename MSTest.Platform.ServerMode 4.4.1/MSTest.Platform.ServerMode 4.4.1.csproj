@@ -1,0 +1,14 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Platform.ServerMode</RootNamespace>
+        <GenerateTestingPlatformEntryPoint>false</GenerateTestingPlatformEntryPoint>
+        <NoWarn>$(NoWarn);TPEXP</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\Shared\ExplicitAttribute.cs" Link="Shared\ExplicitAttribute.cs"/>
+        <PackageReference Include="Microsoft.Testing.Platform.ServerMode.Client.Sources" Version="2.4.1" PrivateAssets="all"/>
+    </ItemGroup>
+
+</Project>

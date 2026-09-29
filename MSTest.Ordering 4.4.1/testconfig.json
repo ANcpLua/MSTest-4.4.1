@@ -1,0 +1,60 @@
+{
+  "mstest": {
+    "execution": {
+      "dependencies": {
+        "chains": [
+          [
+            "MSTest.Ordering.Configuration.ChainTests.Extract",
+            "MSTest.Ordering.Configuration.ChainTests.Transform",
+            "MSTest.Ordering.Configuration.ChainTests.Load"
+          ],
+          [
+            "MSTest.Ordering.Configuration.ConfiguredFailureShowcase.Deploy",
+            "MSTest.Ordering.Configuration.ConfiguredFailureShowcase.Verify"
+          ]
+        ],
+        "nodes": [
+          {
+            "test": "MSTest.Ordering.Configuration.NodeTests.Build",
+            "dependsOn": [ "MSTest.Ordering.Configuration.NodeTests.Restore" ]
+          },
+          {
+            "test": "MSTest.Ordering.Configuration.NodeTests.Analyze",
+            "dependsOn": [ "MSTest.Ordering.Configuration.NodeTests.Restore" ]
+          },
+          {
+            "test": "MSTest.Ordering.Configuration.NodeTests.Pack",
+            "dependsOn": [
+              "MSTest.Ordering.Configuration.NodeTests.Build",
+              "MSTest.Ordering.Configuration.NodeTests.Analyze"
+            ]
+          },
+          {
+            "test": "MSTest.Ordering.Configuration.NodeTests.Publish",
+            "dependsOn": [
+              "MSTest.Ordering.Configuration.NodeTests.Analyze",
+              "MSTest.Ordering.Configuration.NodeTests.Build"
+            ]
+          },
+          {
+            "test": "MSTest.Ordering.Configuration.SmokeTests.*",
+            "dependsOn": [ "MSTest.Ordering.Configuration.DeploymentTests.*" ]
+          },
+          {
+            "test": "MSTest.Ordering.Configuration.DeploymentTests.DeployWeb",
+            "dependsOn": [ "MSTest.Ordering.Configuration.DeploymentTests.DeployApi" ]
+          },
+          {
+            "test": "MSTest.Ordering.Configuration.ConfiguredFailureShowcase.Announce",
+            "dependsOn": [ "MSTest.Ordering.Configuration.ConfiguredFailureShowcase.Deploy" ]
+          },
+          {
+            "test": "MSTest.Ordering.Configuration.ConfiguredFailureShowcase.Rollback",
+            "dependsOn": [ "MSTest.Ordering.Configuration.ConfiguredFailureShowcase.Deploy" ],
+            "proceedOnFailure": true
+          }
+        ]
+      }
+    }
+  }
+}

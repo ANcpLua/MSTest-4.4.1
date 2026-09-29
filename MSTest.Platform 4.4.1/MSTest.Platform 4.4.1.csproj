@@ -1,0 +1,34 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Platform</RootNamespace>
+        <GenerateTestingPlatformEntryPoint>false</GenerateTestingPlatformEntryPoint>
+        <EnableMicrosoftTestingExtensionsAzureDevOpsReport>true</EnableMicrosoftTestingExtensionsAzureDevOpsReport>
+        <EnableMicrosoftTestingExtensionsCtrfReport>true</EnableMicrosoftTestingExtensionsCtrfReport>
+        <EnableMicrosoftTestingExtensionsGitHubActionsReport>true</EnableMicrosoftTestingExtensionsGitHubActionsReport>
+        <EnableMicrosoftTestingExtensionsHangDump>true</EnableMicrosoftTestingExtensionsHangDump>
+        <EnableMicrosoftTestingExtensionsHtmlReport>true</EnableMicrosoftTestingExtensionsHtmlReport>
+        <EnableMicrosoftTestingExtensionsJUnitReport>true</EnableMicrosoftTestingExtensionsJUnitReport>
+        <EnableMicrosoftTestingExtensionsRetry>true</EnableMicrosoftTestingExtensionsRetry>
+        <NoWarn>$(NoWarn);TPEXP</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\Shared\ExplicitAttribute.cs" Link="Shared\ExplicitAttribute.cs"/>
+    </ItemGroup>
+
+    <!-- The extension is built with the project and is no reference of it: the manifest alone names it. -->
+    <ItemGroup>
+        <ProjectReference Include="..\MSTest.Platform.Extension 4.4.1\MSTest.Platform.Extension 4.4.1.csproj"
+                          ReferenceOutputAssembly="false"
+                          OutputItemType="DynamicExtension"/>
+        <Content Include="DynamicExtensions\showcase.testingplatformextensions.json"
+                 Link="showcase.testingplatformextensions.json"
+                 CopyToOutputDirectory="PreserveNewest"/>
+    </ItemGroup>
+
+    <Target Name="DeployDynamicExtension" AfterTargets="Build">
+        <Copy SourceFiles="@(DynamicExtension)" DestinationFolder="$(OutDir)extensions" SkipUnchangedFiles="true"/>
+    </Target>
+
+</Project>

@@ -1,0 +1,14 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Analyzers</RootNamespace>
+        <DefaultItemExcludes>$(DefaultItemExcludes);LegacyBase\**;CurrentBase\**</DefaultItemExcludes>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Remove="InheritedMembers\ClassFixtureTests.cs"/>
+        <ProjectReference Include="LegacyBase\LegacyBase.csproj"/>
+        <ProjectReference Include="CurrentBase\CurrentBase.csproj"/>
+    </ItemGroup>
+
+</Project>

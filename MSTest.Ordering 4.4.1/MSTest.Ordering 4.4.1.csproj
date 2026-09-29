@@ -1,0 +1,15 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Ordering</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\Shared\ExplicitAttribute.cs" Link="Shared\ExplicitAttribute.cs"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\MSTest.Ordering.Setup 4.4.1\MSTest.Ordering.Setup 4.4.1.csproj"/>
+    </ItemGroup>
+
+</Project>

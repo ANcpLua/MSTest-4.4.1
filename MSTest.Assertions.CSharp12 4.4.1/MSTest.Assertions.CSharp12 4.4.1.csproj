@@ -1,0 +1,8 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Assertions.CSharp12</RootNamespace>
+        <LangVersion>12.0</LangVersion>
+    </PropertyGroup>
+
+</Project>

@@ -1,0 +1,21 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.NativeAot</RootNamespace>
+        <PublishAot>true</PublishAot>
+        <!-- The generator reports AOTSG0004 at a location without a syntax tree, which #pragma warning disable does not reach. -->
+        <NoWarn>$(NoWarn);AOTSG0004</NoWarn>
+        <!-- MSTest.Sdk warns when a Native AOT project enables an extension that may not work there. The project
+             enables none. dotnet build -p:EnableMicrosoftTestingExtensionsRetry=true prints the warning for the
+             Retry extension. -->
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\Shared\ExplicitAttribute.cs" Link="Shared\ExplicitAttribute.cs"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\MSTest.SourceGeneration.Library 4.4.1\MSTest.SourceGeneration.Library 4.4.1.csproj"/>
+    </ItemGroup>
+
+</Project>

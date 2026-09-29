@@ -1,0 +1,12 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Platform.TestTarget</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <TestingPlatformEnvironmentVariable Include="SHOWCASE_REGION" Value="eu-central"/>
+        <TestingPlatformEnvironmentVariable Include="SHOWCASE_FEEDS" Value="https://a.example/index.json;https://b.example/index.json"/>
+    </ItemGroup>
+
+</Project>

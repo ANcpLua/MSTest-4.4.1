@@ -1,0 +1,8 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Packaging.SatelliteLanguages</RootNamespace>
+        <SatelliteResourceLanguages>fr;ja</SatelliteResourceLanguages>
+    </PropertyGroup>
+
+</Project>

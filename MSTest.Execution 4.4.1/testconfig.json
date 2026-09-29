@@ -1,0 +1,13 @@
+{
+  "mstest": {
+    "output": {
+      "captureTrace": "Live"
+    },
+    "timeout": {
+      "globalTestInitialize": 1000,
+      "globalTestCleanup": 1000,
+      "testInitialize": 2000,
+      "testCleanup": 2000
+    }
+  }
+}

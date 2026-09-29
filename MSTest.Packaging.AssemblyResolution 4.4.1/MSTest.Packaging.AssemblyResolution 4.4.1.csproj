@@ -1,0 +1,9 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Packaging.AssemblyResolution</RootNamespace>
+        <GenerateTestingPlatformEntryPoint>false</GenerateTestingPlatformEntryPoint>
+        <NoWarn>$(NoWarn);TPEXP</NoWarn>
+    </PropertyGroup>
+
+</Project>

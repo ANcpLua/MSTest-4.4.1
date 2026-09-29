@@ -1,0 +1,6 @@
+<RunSettings>
+    <MSTest>
+        <GlobalTestInitializeTimeout>800</GlobalTestInitializeTimeout>
+        <GlobalTestCleanupTimeout>900</GlobalTestCleanupTimeout>
+    </MSTest>
+</RunSettings>

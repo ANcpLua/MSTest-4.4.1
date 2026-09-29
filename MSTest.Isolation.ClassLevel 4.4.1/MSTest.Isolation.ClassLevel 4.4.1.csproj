@@ -1,0 +1,7 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Isolation.ClassLevel</RootNamespace>
+    </PropertyGroup>
+
+</Project>
