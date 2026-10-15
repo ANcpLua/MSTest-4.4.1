@@ -4,8 +4,11 @@
         <RootNamespace>MSTest.Platform.Fixed.Browser</RootNamespace>
         <OutputType>Exe</OutputType>
         <EnableMSTestRunner>true</EnableMSTestRunner>
-        <!-- Hot reload loads a module of the browser dev server, which the JavaScript host does not serve. -->
-        <WasmEnableHotReload>false</WasmEnableHotReload>
+        <!-- The IDE's desktop test-server launcher cannot host browser-wasm. -->
+        <DisableTestingPlatformServerCapability>true</DisableTestingPlatformServerCapability>
+        <!-- MSTest discovers these tests reflectively; keep their metadata in the published bundle. -->
+        <PublishTrimmed>false</PublishTrimmed>
+        <WasmBuildNative>false</WasmBuildNative>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,19 +17,5 @@
         <PackageReference Include="Microsoft.Testing.Extensions.AzureDevOpsReport" Version="2.5.1"/>
         <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.5.1"/>
     </ItemGroup>
-
-    <!-- The boot module lies next to _framework in the output folder, and dotnet run starts it under the
-         JavaScript host bun instead of the browser dev server. -->
-    <ItemGroup>
-        <Content Update="wwwroot\main.mjs" CopyToOutputDirectory="PreserveNewest"/>
-    </ItemGroup>
-
-    <Target Name="RunUnderJavaScriptHost" AfterTargets="ComputeRunArguments">
-        <PropertyGroup>
-            <RunCommand>bun</RunCommand>
-            <RunArguments>main.mjs</RunArguments>
-            <RunWorkingDirectory>$(OutDir)wwwroot</RunWorkingDirectory>
-        </PropertyGroup>
-    </Target>
 
 </Project>

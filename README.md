@@ -1,48 +1,89 @@
 # MSTest examples
 
-The projects use MSTest SDK, framework and adapter **4.5.1** and Microsoft.Testing.Platform
-**2.5.1** on .NET SDK **10.0.401**. `global.json` pins the MSTest SDK; its defaults select
-the matching framework, adapter and platform. Explicit package references use those same versions.
-The `LegacyBase` analyzer fixture deliberately keeps MSTest 3.11.1. Project and folder names retain
-`4.4.1` so existing paths stay usable.
+The examples use **.NET SDK 10.0.401**, **MSTest SDK/framework/adapter 4.5.1** and
+**Microsoft.Testing.Platform 2.5.1**. `global.json` selects stable .NET SDKs and the native
+MTP test driver. `LegacyBase` deliberately keeps MSTest 3.11.1 for analyzer migration tests;
+the other framework references match 4.5.1. Existing project and folder names retain `4.4.1`.
 
-Run an ordinary project through the native MTP driver:
+For an ordinary test project, start with `MSTest.Sdk`; it selects the framework, adapter,
+platform, executable entry point and default extensions. Add properties and extensions only
+for the feature being demonstrated. This is the complete project shape when copied beside
+this repository's `global.json`:
 
-```sh
-DOTNET_PROCESSOR_COUNT=2 dotnet test --project "MSTest.Data 4.4.1/MSTest.Data 4.4.1.csproj"
+```xml
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>
 ```
 
-Run the retry examples through their MTP executable:
+Run the desktop solution with the native MTP driver:
 
 ```sh
-DOTNET_PROCESSOR_COUNT=2 dotnet run --project "MSTest.Platform.Changed 4.4.1/MSTest.Platform.Changed 4.4.1.csproj" -- --report-trx
+DOTNET_PROCESSOR_COUNT=2 dotnet test --solution MSTest-4.4.1.slnx --max-parallel-test-modules 1
 ```
 
-With .NET SDK 10.0.401, the native `dotnet test` driver counts a superseded failed `[Retry]`
-attempt as a failure even when the final attempt passes. The MTP executable reports the retry
-history, and its TRX report records the final outcome.
+For one project, use `dotnet test --project "path/to/project.csproj"`. MTP options such as
+`--report-trx` follow it directly. The processor and module limits above keep this large
+showcase's process-heavy scenarios within the local machine's capacity.
 
-The two `browser-wasm` projects run under Bun through their configured `dotnet run` launcher:
+Fixtures that deliberately fail, retry after a failure, time out or are cancelled use the
+showcase's `[Explicit]` condition. Their corresponding `RunTests` launch the real MTP test
+application and assert its results; an ordinary solution run executes those verifiers.
+`AttemptRetryRunTests`, for example, checks the final single passed TRX result, the failed
+first attempt in CTRF, and the flaky count in the GitHub Actions report.
+
+To examine that retry fixture itself, enable it with a specific filter:
 
 ```sh
-DOTNET_PROCESSOR_COUNT=2 dotnet run --project "MSTest.Packaging.Browser 4.4.1/MSTest.Packaging.Browser 4.4.1.csproj"
-DOTNET_PROCESSOR_COUNT=2 dotnet run --project "MSTest.Platform.Fixed.Browser 4.4.1/MSTest.Platform.Fixed.Browser 4.4.1.csproj"
+MSTEST_EXPLICIT=1 DOTNET_PROCESSOR_COUNT=2 dotnet run --project "MSTest.Platform.Changed 4.4.1/MSTest.Platform.Changed 4.4.1.csproj" -- --filter ClassName=MSTest.Platform.Changed.Retries.RecountTests --report-trx
 ```
 
-The native driver in this SDK cannot launch these browser modules. If a browser bundle still loads
-the previous package version after an upgrade, regenerate it with
-`dotnet build "path/to/project.csproj" --no-restore -t:Rebuild`.
+`dotnet run` is a [documented MTP entry point](https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-run-and-debug).
+The .NET 10.0.401 native driver counts superseded in-process retry failures as final failures.
+The explicit-fixture arrangement does not repair that SDK bug: it verifies the deliberately
+failing scenario through MTP's own executable and structured reports, like the other
+failure demonstrations. Ordinary application tests can use MSTest's built-in `[Retry]`;
+its retry-history rendering depends on the consuming SDK driver.
 
-`MSTest.Platform.Extension` is a plugin DLL loaded by the test host. Its explicit
-`IsTestingPlatformApplication=false` overrides MTP's default of `true`, so the solution runner
-classifies it as a library. `DynamicExtensionRunTests` exercise it through the executable host.
+Browser-WASM examples use **Node.js** and a published WebAssembly bundle, following the
+[upstream browser sample](https://github.com/microsoft/testfx/blob/0bf77e3aedbf86f1fa16220bc951d3b52ba56763/samples/BrowserPlayground/README.md).
+`MSTest.Browser.slnx` groups those platform-specific projects separately. Their test code runs
+inside the browser-WASM runtime, so their DLLs are not desktop CLR test modules. The projects
+keep reflection metadata with `PublishTrimmed=false` and use the prebuilt WASM runtime with
+`WasmBuildNative=false`.
 
-On this Mac, the dotfiles repository provides installation checks and Rider-compatible inspections:
+Publish and run the runtime example:
 
 ```sh
-make -C ~/.local/share/chezmoi dotnet-tools dotnet-testing
-make -C ~/.local/share/chezmoi inspectcode SOLUTION="$PWD/MSTest-4.4.1.slnx" NO_BUILD=1
+DOTNET_PROCESSOR_COUNT=2 dotnet publish "MSTest.Packaging.Browser 4.4.1/MSTest.Packaging.Browser 4.4.1.csproj" --configuration Debug --output artifacts/browser-runtime
+node artifacts/browser-runtime/wwwroot/runtests.mjs --minimum-expected-tests 1
 ```
 
-InspectCode includes INFO, HINT, SUGGESTION, WARNING and ERROR findings and writes
-`artifacts/inspectcode.sarif` using the solution's shared Rider/ReSharper and EditorConfig settings.
+Publish and run the browser reporting example:
+
+```sh
+DOTNET_PROCESSOR_COUNT=2 dotnet publish "MSTest.Platform.Fixed.Browser 4.4.1/MSTest.Platform.Fixed.Browser 4.4.1.csproj" --configuration Debug --output artifacts/browser-reports
+node artifacts/browser-reports/wwwroot/runtests.mjs --minimum-expected-tests 1 --report-trx --report-azdo
+```
+
+`BrowserArtifactRunTests` also publishes and runs the reporting fixture under Node during the
+desktop solution run, and checks its test count, exit code, TRX path and attachment output.
+Reports written by the browser runtime live in its virtual file system. The bundle can also
+run in an actual browser: serve its `wwwroot` directory over HTTP and open `index.html`;
+test output appears in the browser console, and MTP arguments can be supplied as repeated
+`arg` query parameters. `main.mjs` is the browser entry point; `runtests.mjs` forwards Node CLI
+arguments and the managed exit code. The SDK's default `dotnet run` launcher is left intact.
+
+`MSTest.Platform.Extension` is a plugin library, so `IsTestingPlatformApplication=false`
+correctly overrides MTP's default for that project. `DynamicExtensionRunTests` loads and
+exercises it through the executable test host. Ordinary test applications keep the SDK defaults.
+
+Optional Rider/ReSharper inspections, with every severity level included:
+
+```sh
+jb inspectcode MSTest-4.4.1.slnx --severity=INFO --format=Sarif --output=artifacts/inspectcode.sarif
+```

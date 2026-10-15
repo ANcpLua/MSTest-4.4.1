@@ -1,5 +1,5 @@
 import { dotnet } from './_framework/dotnet.js';
 
-const { runMain } = await dotnet.withApplicationArguments(...process.argv.slice(2)).create();
+const { runMain } = await dotnet.withApplicationArgumentsFromQuery().create();
 
-process.exitCode = await runMain();
+globalThis.mtpExitCode = await runMain();

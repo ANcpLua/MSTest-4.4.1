@@ -27,14 +27,12 @@
   <Project Path="MSTest.Ordering.Setup 4.4.1/MSTest.Ordering.Setup 4.4.1.csproj" />
   <Project Path="MSTest.Packaging 4.4.1/MSTest.Packaging 4.4.1.csproj" />
   <Project Path="MSTest.Packaging.AssemblyResolution 4.4.1/MSTest.Packaging.AssemblyResolution 4.4.1.csproj" />
-  <Project Path="MSTest.Packaging.Browser 4.4.1/MSTest.Packaging.Browser 4.4.1.csproj" />
   <Project Path="MSTest.Packaging.SatelliteLanguages 4.4.1/MSTest.Packaging.SatelliteLanguages 4.4.1.csproj" />
   <Project Path="MSTest.Platform 4.4.1/MSTest.Platform 4.4.1.csproj" />
   <Project Path="MSTest.Platform.AotClient 4.4.1/MSTest.Platform.AotClient 4.4.1.csproj" />
   <Project Path="MSTest.Platform.Changed 4.4.1/MSTest.Platform.Changed 4.4.1.csproj" />
   <Project Path="MSTest.Platform.Extension 4.4.1/MSTest.Platform.Extension 4.4.1.csproj" />
   <Project Path="MSTest.Platform.Fixed 4.4.1/MSTest.Platform.Fixed 4.4.1.csproj" />
-  <Project Path="MSTest.Platform.Fixed.Browser 4.4.1/MSTest.Platform.Fixed.Browser 4.4.1.csproj" />
   <Project Path="MSTest.Platform.ServerMode 4.4.1/MSTest.Platform.ServerMode 4.4.1.csproj" />
   <Project Path="MSTest.Platform.TestTarget 4.4.1/MSTest.Platform.TestTarget 4.4.1.csproj" />
   <Project Path="MSTest.Reporting 4.4.1/MSTest.Reporting 4.4.1.csproj" />

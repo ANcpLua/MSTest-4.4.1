@@ -20,14 +20,13 @@
         <AssemblyMetadata Include="LangVersion" Value="$(LangVersion)"/>
     </ItemGroup>
 
-    <!-- The browser-wasm application that WebAssembly/BrowserArtifactRunTests starts with dotnet run: built with
-         this project, not referenced by it. -->
+    <!-- The browser fixture is published and run under Node by BrowserArtifactRunTests. It is not a
+         desktop test module or a project reference in the desktop solution. -->
     <PropertyGroup>
         <BrowserProject>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../MSTest.Platform.Fixed.Browser 4.4.1/MSTest.Platform.Fixed.Browser 4.4.1.csproj'))</BrowserProject>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="$(BrowserProject)" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true"/>
         <AssemblyMetadata Include="BrowserProjectPath" Value="$(BrowserProject)"/>
     </ItemGroup>
 

@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Reflection;
+using MSTest.Showcase;
 
 namespace MSTest.Platform.Fixed.WebAssembly;
 
@@ -8,7 +10,8 @@ namespace MSTest.Platform.Fixed.WebAssembly;
 /// every file that a test or the run produces, the TRX report as well, with the display name of the file and its
 /// path in the virtual file system of the browser-wasm runtime, which is not a path on the disk of the machine.
 /// Here the example starts MSTest.Platform.Fixed.Browser 4.4.1, whose one test attaches a file with
-/// <c>TestContext.AddResultFile</c>, with <c>dotnet run</c> under the JavaScript host bun. The project references
+/// <c>TestContext.AddResultFile</c>, by publishing its bundle and running <c>wwwroot/runtests.mjs</c> under Node.
+/// Publishing is part of this fixture's setup; no browser DLL is sent to the desktop test driver. The project references
 /// the packages Microsoft.Testing.Extensions.TrxReport and Microsoft.Testing.Extensions.AzureDevOpsReport.
 /// </summary>
 [TestClass]
@@ -23,15 +26,43 @@ public sealed class BrowserArtifactRunTests
     private static TestApplicationRun _run = null!;
 
     [ClassInitialize]
-    public static async Task RunTheBrowserApplication(TestContext testContext) =>
-        _run = await TestApplicationRun.StartAsync(
-            "dotnet",
-            Directory.CreateTempSubdirectory(),
-            new Dictionary<string, string>(),
-            testContext.CancellationToken,
-            "run", "--no-build", "--project", Project, "--",
-            "--report-trx", "--report-trx-filename", Trx,
-            "--report-azdo");
+    public static async Task RunTheBrowserApplication(TestContext testContext)
+    {
+        var results = Directory.CreateTempSubdirectory();
+        try
+        {
+            var publish = Path.Combine(results.FullName, "publish");
+            var start = new ProcessStartInfo("dotnet",
+                ["publish", Project, "--configuration", "Debug", "--output", publish, "--nologo", "--disable-build-servers"])
+            {
+                WorkingDirectory = Path.GetDirectoryName(Project)!,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+            await using (var child = ChildProcess.Start(start, testContext.CancellationToken))
+            {
+                var output = child.Process.StandardOutput.ReadToEndAsync(testContext.CancellationToken);
+                var error = child.Process.StandardError.ReadToEndAsync(testContext.CancellationToken);
+                await child.Process.WaitForExitAsync(testContext.CancellationToken);
+                Assert.AreEqual(0, child.Process.ExitCode, $"Browser publish failed:\n{await output}\n{await error}");
+            }
+
+            _run = await TestApplicationRun.StartAsync(
+                "node",
+                results,
+                new Dictionary<string, string>(),
+                testContext.CancellationToken,
+                Path.Combine(publish, "wwwroot", "runtests.mjs"),
+                "--minimum-expected-tests", "1",
+                "--report-trx", "--report-trx-filename", Trx,
+                "--report-azdo");
+        }
+        catch
+        {
+            results.Delete(recursive: true);
+            throw;
+        }
+    }
 
     [ClassCleanup]
     public static void DeleteTheResults() => _run.Dispose();
@@ -52,6 +83,9 @@ public sealed class BrowserArtifactRunTests
     public void Run_passes()
     {
         Assert.Contains("Test run summary: Passed!", _run.Output);
+        Assert.Contains("  total: 1", _run.Output);
+        Assert.Contains("  succeeded: 1", _run.Output);
+        Assert.Contains("  failed: 0", _run.Output);
         Assert.AreEqual(0, _run.ExitCode);
     }
 }
