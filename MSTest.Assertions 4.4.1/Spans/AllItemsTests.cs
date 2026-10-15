@@ -1,7 +1,7 @@
 namespace MSTest.Assertions.Spans;
 
 /// <summary>
-/// Check every element of a span or a memory region: all distinct, none null, all of one type.
+///     Check every element of a span or a memory region: all distinct, none null, all of one type.
 /// </summary>
 [TestClass]
 public sealed class AllItemsTests
@@ -30,9 +30,11 @@ public sealed class AllItemsTests
     public void AreAllDistinct_fails_with_a_duplicate()
     {
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllDistinct(new Span<int>(PortsWithDuplicate)));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllDistinct(new ReadOnlySpan<int>(PortsWithDuplicate)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreAllDistinct(new ReadOnlySpan<int>(PortsWithDuplicate)));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllDistinct(new Memory<int>(PortsWithDuplicate)));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllDistinct(new ReadOnlyMemory<int>(PortsWithDuplicate)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreAllDistinct(new ReadOnlyMemory<int>(PortsWithDuplicate)));
     }
 
     [TestMethod]
@@ -40,8 +42,8 @@ public sealed class AllItemsTests
     {
         Assert.AreAllDistinct(new ReadOnlySpan<string>(Hosts));
 
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreAllDistinct(new ReadOnlySpan<string>(Hosts), StringComparer.OrdinalIgnoreCase));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreAllDistinct(new ReadOnlySpan<string>(Hosts), StringComparer.OrdinalIgnoreCase));
     }
 
     [TestMethod]
@@ -57,9 +59,11 @@ public sealed class AllItemsTests
     public void AreAllNotNull_fails_with_null()
     {
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllNotNull(new Span<string?>(NamesWithGap)));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllNotNull(new ReadOnlySpan<string?>(NamesWithGap)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreAllNotNull(new ReadOnlySpan<string?>(NamesWithGap)));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllNotNull(new Memory<string?>(NamesWithGap)));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllNotNull(new ReadOnlyMemory<string?>(NamesWithGap)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreAllNotNull(new ReadOnlyMemory<string?>(NamesWithGap)));
     }
 
     [TestMethod]
@@ -74,23 +78,28 @@ public sealed class AllItemsTests
     [TestMethod]
     public void AreAllOfType_fails_when_one_element_has_another_type()
     {
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllOfType<string, object>(new Span<object>(TextsAndNumbers)));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllOfType<string, object>(new ReadOnlySpan<object>(TextsAndNumbers)));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllOfType<string, object>(new Memory<object>(TextsAndNumbers)));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllOfType<string, object>(new ReadOnlyMemory<object>(TextsAndNumbers)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreAllOfType<string, object>(new Span<object>(TextsAndNumbers)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreAllOfType<string, object>(new ReadOnlySpan<object>(TextsAndNumbers)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreAllOfType<string, object>(new Memory<object>(TextsAndNumbers)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreAllOfType<string, object>(new ReadOnlyMemory<object>(TextsAndNumbers)));
     }
 
     // The type is only known at run time: pass it as the first argument.
     [TestMethod]
     public void AreAllOfType_takes_a_runtime_type()
     {
-        Type expected = typeof(string);
+        var expected = typeof(string);
 
         Assert.AreAllOfType(expected, new Span<object>(Texts));
         Assert.AreAllOfType(expected, new ReadOnlySpan<object>(Texts));
         Assert.AreAllOfType(expected, new Memory<object>(Texts));
         Assert.AreAllOfType(expected, new ReadOnlyMemory<object>(Texts));
 
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllOfType(expected, new ReadOnlySpan<object>(TextsAndNumbers)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreAllOfType(expected, new ReadOnlySpan<object>(TextsAndNumbers)));
     }
 }

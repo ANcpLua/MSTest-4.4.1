@@ -6,7 +6,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Remove="InheritedMembers\ClassFixtureTests.cs"/>
         <ProjectReference Include="LegacyBase\LegacyBase.csproj"/>
         <ProjectReference Include="CurrentBase\CurrentBase.csproj"/>
     </ItemGroup>

@@ -3,13 +3,13 @@ using MSTest.Platform.Fixed.Warehouse;
 namespace MSTest.Platform.Fixed.Terminal;
 
 /// <summary>
-/// A <c>commandLineOptionDefaults</c> section in <c>testconfig.json</c> gives an option a default value without
-/// turning the option on. The terminal reporter of a test application that is started directly takes the
-/// default of <c>--show-test-results</c>, which chooses the outcomes whose results it prints, and a
-/// <c>--show-test-results</c> on the command line wins over the default. Here the configuration file, passed with
-/// <c>--config-file</c>, asks for passed results only, and each run has
-/// <see cref="ShelfTests.Counts_the_boxes_on_the_shelf"/>, which passes, and
-/// <see cref="DamagedParcelTests.Rejects_the_damaged_parcel"/>, which fails.
+///     A <c>commandLineOptionDefaults</c> section in <c>testconfig.json</c> gives an option a default value without
+///     turning the option on. The terminal reporter of a test application that is started directly takes the
+///     default of <c>--show-test-results</c>, which chooses the outcomes whose results it prints, and a
+///     <c>--show-test-results</c> on the command line wins over the default. Here the configuration file, passed with
+///     <c>--config-file</c>, asks for passed results only, and each run has
+///     <see cref="ShelfTests.Counts_the_boxes_on_the_shelf" />, which passes, and
+///     <see cref="DamagedParcelTests.Rejects_the_damaged_parcel" />, which fails.
 /// </summary>
 [TestClass]
 public sealed class PassiveDefaultRunTests(TestContext testContext)
@@ -51,9 +51,10 @@ public sealed class PassiveDefaultRunTests(TestContext testContext)
             new Dictionary<string, string>(),
             testContext.CancellationToken,
             [
-                "--filter", $"FullyQualifiedName={typeof(ShelfTests).FullName}.{nameof(ShelfTests.Counts_the_boxes_on_the_shelf)}|FullyQualifiedName={typeof(DamagedParcelTests).FullName}.{nameof(DamagedParcelTests.Rejects_the_damaged_parcel)}",
+                "--filter",
+                $"FullyQualifiedName={typeof(ShelfTests).FullName}.{nameof(ShelfTests.Counts_the_boxes_on_the_shelf)}|FullyQualifiedName={typeof(DamagedParcelTests).FullName}.{nameof(DamagedParcelTests.Rejects_the_damaged_parcel)}",
                 "--config-file", configuration,
-                .. options,
+                .. options
             ]);
     }
 }

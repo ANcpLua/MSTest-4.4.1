@@ -5,12 +5,13 @@ using MSTest.Showcase;
 namespace MSTest.Platform;
 
 /// <summary>
-/// One run of this test application in a process of its own, which lets an example assert what the test host
-/// prints, which exit code it returns and which files it writes. The run prints English and no banner,
-/// includes the <c>[Explicit]</c> demonstrations that its filter selects and writes to a results directory of
-/// its own.
+///     One run of this test application in a process of its own, which lets an example assert what the test host
+///     prints, which exit code it returns and which files it writes. The run prints English and no banner,
+///     includes the <c>[Explicit]</c> demonstrations that its filter selects and writes to a results directory of
+///     its own.
 /// </summary>
-internal sealed partial record TestApplicationRun(int ExitCode, string Output, string Error, DirectoryInfo Results) : IDisposable
+internal sealed partial record TestApplicationRun(int ExitCode, string Output, string Error, DirectoryInfo Results)
+    : IDisposable
 {
     private const string Language = "TESTINGPLATFORM_UI_LANGUAGE";
     private const string NoBanner = "TESTINGPLATFORM_NOBANNER";
@@ -19,40 +20,52 @@ internal sealed partial record TestApplicationRun(int ExitCode, string Output, s
     public IReadOnlyList<string> ResultLines =>
         [.. ResultLine().Matches(Output).Select(static line => line.Groups[1].Value)];
 
-    public static Task<TestApplicationRun> StartAsync(CancellationToken cancellationToken, params string[] arguments) =>
-        StartAsync(new Dictionary<string, string>(), cancellationToken, arguments);
+    public void Dispose()
+    {
+        Results.Delete(true);
+    }
+
+    public static Task<TestApplicationRun> StartAsync(CancellationToken cancellationToken, params string[] arguments)
+    {
+        return StartAsync(new Dictionary<string, string>(), cancellationToken, arguments);
+    }
 
     public static Task<TestApplicationRun> StartAsync(
         IReadOnlyDictionary<string, string> environment,
         CancellationToken cancellationToken,
-        params string[] arguments) =>
-        StartAsync(Directory.CreateTempSubdirectory(), environment, cancellationToken, arguments);
+        params string[] arguments)
+    {
+        return StartAsync(Directory.CreateTempSubdirectory(), environment, cancellationToken, arguments);
+    }
 
     // A results directory that exists before the run, for a variable that names a file in it.
     public static Task<TestApplicationRun> StartAsync(
         DirectoryInfo results,
         IReadOnlyDictionary<string, string> environment,
         CancellationToken cancellationToken,
-        params string[] arguments) =>
-        LaunchAsync(results, environment, [.. arguments, "--results-directory", results.FullName], cancellationToken);
-
-    // A tool is the first argument of the command line and takes the options of the tool only.
-    public static Task<TestApplicationRun> StartToolAsync(CancellationToken cancellationToken, string tool, params string[] arguments) =>
-        LaunchAsync(Directory.CreateTempSubdirectory(), new Dictionary<string, string>(), [tool, .. arguments], cancellationToken);
+        params string[] arguments)
+    {
+        return LaunchAsync(results, environment, [.. arguments, "--results-directory", results.FullName],
+            cancellationToken);
+    }
 
     // The indented lines that the terminal prints below a heading, without their indentation.
-    public IReadOnlyList<string> LinesBelow(string heading) =>
-    [
-        .. Output.ReplaceLineEndings("\n").Split('\n')
-            .SkipWhile(line => !line.TrimStart().StartsWith(heading))
-            .Skip(1)
-            .TakeWhile(static line => line.StartsWith(' '))
-            .Select(static line => line.Trim()),
-    ];
+    public IReadOnlyList<string> LinesBelow(string heading)
+    {
+        return
+        [
+            .. Output.ReplaceLineEndings("\n").Split('\n')
+                .SkipWhile(line => !line.TrimStart().StartsWith(heading))
+                .Skip(1)
+                .TakeWhile(static line => line.StartsWith(' '))
+                .Select(static line => line.Trim())
+        ];
+    }
 
-    public string PathOf(string file) => Path.Combine(Results.FullName, file);
-
-    public void Dispose() => Results.Delete(recursive: true);
+    public string PathOf(string file)
+    {
+        return Path.Combine(Results.FullName, file);
+    }
 
     private static async Task<TestApplicationRun> LaunchAsync(
         DirectoryInfo results,
@@ -64,15 +77,15 @@ internal sealed partial record TestApplicationRun(int ExitCode, string Output, s
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            Environment =
+            {
+                [Language] = "en-us",
+                [NoBanner] = "1",
+                [ExplicitAttribute.Variable] = "1"
+            }
         };
-        start.Environment[Language] = "en-us";
-        start.Environment[NoBanner] = "1";
-        start.Environment[ExplicitAttribute.Variable] = "1";
 
-        foreach (var (name, value) in environment)
-        {
-            start.Environment[name] = value;
-        }
+        foreach (var (name, value) in environment) start.Environment[name] = value;
 
         await using var child = ChildProcess.Start(start, cancellationToken);
         var application = child.Process;

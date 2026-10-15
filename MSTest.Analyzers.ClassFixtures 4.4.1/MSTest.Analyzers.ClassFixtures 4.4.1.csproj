@@ -8,7 +8,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="..\MSTest.Analyzers 4.4.1\InheritedMembers\ClassFixtureTests.cs" Link="InheritedMembers\ClassFixtureTests.cs"/>
         <ProjectReference Include="..\MSTest.Analyzers 4.4.1\LegacyBase\LegacyBase.csproj"/>
         <ProjectReference Include="..\MSTest.Analyzers 4.4.1\CurrentBase\CurrentBase.csproj"/>
         <!-- The MSTest 3 framework assembly of LegacyBase, as a reference of the compilation under an alias. -->

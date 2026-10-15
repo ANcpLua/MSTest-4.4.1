@@ -1,15 +1,13 @@
-using System.Text.Json.Nodes;
-
 namespace MSTest.Platform.Changed.ServerMode;
 
 /// <summary>
-/// A server answers a request whose identifier is a number, as it is or as a numeric text, with a result or
-/// with an error that has a code, and the identifier comes back as it was sent.
-/// <c>initialize</c> is the first request of a connection: a request before it has the error
-/// <c>-32002</c>, and a second <c>initialize</c> has the error <c>-32600</c>. After it, a method that the
-/// server does not know has the error <c>-32601</c> and a request with a parameter that is not valid has the
-/// error <c>-32602</c>. A request whose identifier is not numeric, such as <c>"restock-7"</c>, gets no
-/// answer: the server ends with an unhandled exception.
+///     A server answers a request whose identifier is a number, as it is or as a numeric text, with a result or
+///     with an error that has a code, and the identifier comes back as it was sent.
+///     <c>initialize</c> is the first request of a connection: a request before it has the error
+///     <c>-32002</c>, and a second <c>initialize</c> has the error <c>-32600</c>. After it, a method that the
+///     server does not know has the error <c>-32601</c> and a request with a parameter that is not valid has the
+///     error <c>-32602</c>. A request whose identifier is not numeric, such as <c>"restock-7"</c>, gets no
+///     answer: the server ends with an unhandled exception.
 /// </summary>
 [TestClass]
 public sealed class LifecycleRunTests(TestContext testContext)
@@ -50,7 +48,8 @@ public sealed class LifecycleRunTests(TestContext testContext)
             testContext.CancellationToken);
 
         Assert.AreEqual(ServerNotInitialized, (int)answer["error"]!["code"]!);
-        Assert.AreEqual("The server must be initialized before this request can be processed.", (string?)answer["error"]!["message"]);
+        Assert.AreEqual("The server must be initialized before this request can be processed.",
+            (string?)answer["error"]!["message"]);
     }
 
     [TestMethod]
@@ -70,7 +69,8 @@ public sealed class LifecycleRunTests(TestContext testContext)
     {
         await using var server = await InitializedServerAsync();
 
-        var answer = await server.RequestAsync(Initialize.Replace("\"id\": 1", "\"id\": 2"), testContext.CancellationToken);
+        var answer =
+            await server.RequestAsync(Initialize.Replace("\"id\": 1", "\"id\": 2"), testContext.CancellationToken);
 
         Assert.AreEqual(InvalidRequest, (int)answer["error"]!["code"]!);
         Assert.AreEqual("The server has already received an initialize request.", (string?)answer["error"]!["message"]);
@@ -106,7 +106,7 @@ public sealed class LifecycleRunTests(TestContext testContext)
     private async Task<ServerModeSession> InitializedServerAsync()
     {
         var server = await ServerModeSession.StartAsync(testContext.CancellationToken);
-        JsonNode answer = await server.RequestAsync(Initialize, testContext.CancellationToken);
+        var answer = await server.RequestAsync(Initialize, testContext.CancellationToken);
 
         Assert.IsNotNull(answer["result"]);
 

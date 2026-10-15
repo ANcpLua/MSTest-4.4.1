@@ -5,10 +5,10 @@ using MSTest.SourceGenerated;
 namespace MSTest.NativeAot.DynamicData;
 
 /// <summary>
-/// <c>[DynamicData]</c> in a trimmed executable. For a source that is a public or internal static property,
-/// method without parameters or field, the generator writes a delegate that reads the member directly, and
-/// MSTest takes the rows from that delegate. The same holds for a source of another class and for the method
-/// behind <c>DynamicDataDisplayName</c>.
+///     <c>[DynamicData]</c> in a trimmed executable. For a source that is a public or internal static property,
+///     method without parameters or field, the generator writes a delegate that reads the member directly, and
+///     MSTest takes the rows from that delegate. The same holds for a source of another class and for the method
+///     behind <c>DynamicDataDisplayName</c>.
 /// </summary>
 [TestClass]
 public sealed class GeneratedSourceTests(TestContext testContext)
@@ -36,7 +36,7 @@ public sealed class GeneratedSourceTests(TestContext testContext)
         return [[2, 4]];
     }
 
-    public static string Name(MethodInfo method, object[] row)
+    public static string Name(MethodInfo _, object[] row)
     {
         _displayNameCall = Environment.StackTrace;
         return $"{row[0]} costs {row[1]}";
@@ -87,7 +87,9 @@ public sealed class GeneratedSourceTests(TestContext testContext)
     }
 
     private static IEnumerable<string> GeneratedSources([CallerMemberName] string test = "")
-        => MSTestReflectionMetadata.TestClasses.Single(static entry => entry.Type == typeof(GeneratedSourceTests))
+    {
+        return MSTestReflectionMetadata.TestClasses.Single(static entry => entry.Type == typeof(GeneratedSourceTests))
             .Methods.Single(method => method.Name == test)
             .DynamicDataSources.Select(static source => source.SourceName);
+    }
 }

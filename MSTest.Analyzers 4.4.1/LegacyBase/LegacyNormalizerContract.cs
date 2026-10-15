@@ -1,12 +1,12 @@
 namespace MSTest.Analyzers.LegacyBase;
 
 /// <summary>
-/// A contract of a library that is compiled against MSTest.TestFramework 3.11.1: the tests that every
-/// normalizer passes, for the test class of each normalizer to inherit.
+///     A contract of a library that is compiled against MSTest.TestFramework 3.11.1: the tests that every
+///     normalizer passes, for the test class of each normalizer to inherit.
 /// </summary>
 public abstract class LegacyNormalizerContract
 {
-    public static int Runs { get; private set; }
+    protected static int Runs { get; private set; }
 
     protected abstract string Normalize(string text);
 
@@ -27,7 +27,7 @@ public abstract class LegacyNormalizerContract
     {
         Runs++;
 
-        string normalized = Normalize(text);
+        var normalized = Normalize(text);
 
         Assert.AreEqual(normalized, Normalize(normalized));
     }

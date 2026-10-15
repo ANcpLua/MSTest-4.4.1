@@ -1,9 +1,9 @@
 namespace MSTest.SourceGeneration.Descriptors;
 
 /// <summary>
-/// What a listing of <see cref="FallbackShapeTests"/> shows about the descriptors. MSTest takes the tests
-/// with a descriptor first and looks the remaining ones up afterwards, so <c>--list-tests</c> names the
-/// tests with a descriptor before the others, whatever their order in the class.
+///     What a listing of <see cref="FallbackShapeTests" /> shows about the descriptors. MSTest takes the tests
+///     with a descriptor first and looks the remaining ones up afterwards, so <c>--list-tests</c> names the
+///     tests with a descriptor before the others, whatever their order in the class.
 /// </summary>
 [TestClass]
 public sealed class DiscoveryOrderTests(TestContext testContext)
@@ -24,7 +24,7 @@ public sealed class DiscoveryOrderTests(TestContext testContext)
                 nameof(FallbackShapeTests.Asynchronous_test_has_no_descriptor),
                 nameof(FallbackShapeTests.Test_that_returns_a_task_has_no_descriptor),
                 nameof(FallbackShapeTests.Test_with_dynamic_data_has_no_descriptor),
-                nameof(FallbackShapeTests.Test_with_another_attribute_has_no_descriptor),
+                nameof(FallbackShapeTests.Test_with_another_attribute_has_no_descriptor)
             ],
             run.Output.Split('\n')
                 .Where(static line => line.StartsWith("  ", StringComparison.Ordinal) && !line.Contains(':'))

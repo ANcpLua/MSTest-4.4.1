@@ -1,12 +1,12 @@
 namespace MSTest.Assertions.Spans;
 
 /// <summary>
-/// Assert that a span or a memory region is empty, or is not, without copying it into a collection first.
+///     Assert that a span or a memory region is empty, or is not, without copying it into a collection first.
 /// </summary>
 [TestClass]
 public sealed class EmptinessTests
 {
-    private static readonly byte[] Payload = [0x4D, 0x53, 0x54];
+    private static readonly byte[] Payload = [.."MST"u8];
 
     [TestMethod]
     public void IsEmpty_passes_without_elements()
@@ -48,15 +48,20 @@ public sealed class EmptinessTests
     [TestMethod]
     public void Interpolated_message_is_formatted_on_failure_only()
     {
-        int formatted = 0;
-        string Length() => $"{Payload.Length} bytes, formatted {++formatted} time(s)";
+        var formatted = 0;
 
         Assert.IsEmpty(Span<byte>.Empty, $"left over: {Length()}");
         Assert.IsNotEmpty(new Memory<byte>(Payload), $"nothing received: {Length()}");
         Assert.AreEqual(0, formatted);
 
-        AssertFailedException failure = Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.IsEmpty(new ReadOnlyMemory<byte>(Payload), $"left over: {Length()}"));
+        var failure = Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.IsEmpty(new ReadOnlyMemory<byte>(Payload), $"left over: {Length()}"));
         Assert.Contains("left over: 3 bytes, formatted 1 time(s)", failure.Message);
+        return;
+
+        string Length()
+        {
+            return $"{Payload.Length} bytes, formatted {++formatted} time(s)";
+        }
     }
 }

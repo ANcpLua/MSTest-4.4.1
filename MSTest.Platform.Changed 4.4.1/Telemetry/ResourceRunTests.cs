@@ -3,11 +3,11 @@ using System.Runtime.InteropServices;
 namespace MSTest.Platform.Changed.Telemetry;
 
 /// <summary>
-/// The resource that the provider attaches to every span and instrument describes where the run happened.
-/// <c>AddTestingPlatformResource</c>, which <c>AddOpenTelemetryProviderFromEnvironment</c> calls, detects the
-/// test assembly, the host, the operating system and the runtime, and names the service after the test
-/// assembly. On a CI system it adds the provider, the pipeline, the branch and the commit from the variables
-/// of that system. This example sets the variables of GitHub Actions itself, as a runner does.
+///     The resource that the provider attaches to every span and instrument describes where the run happened.
+///     <c>AddTestingPlatformResource</c>, which <c>AddOpenTelemetryProviderFromEnvironment</c> calls, detects the
+///     test assembly, the host, the operating system and the runtime, and names the service after the test
+///     assembly. On a CI system it adds the provider, the pipeline, the branch and the commit from the variables
+///     of that system. This example sets the variables of GitHub Actions itself, as a runner does.
 /// </summary>
 [TestClass]
 public sealed class ResourceRunTests(TestContext testContext)
@@ -29,13 +29,15 @@ public sealed class ResourceRunTests(TestContext testContext)
     }
 
     [TestMethod]
-    public async Task Resource_has_no_pipeline_outside_a_CI_system() =>
+    public async Task Resource_has_no_pipeline_outside_a_CI_system()
+    {
         Assert.DoesNotContain("cicd.provider.name", (await DetectAsync([])).Keys);
+    }
 
     [TestMethod]
     public async Task Resource_names_the_pipeline_the_branch_and_the_commit_of_GitHub_Actions()
     {
-        var resource = await DetectAsync(new()
+        var resource = await DetectAsync(new Dictionary<string, string>
         {
             ["GITHUB_ACTIONS"] = "true",
             ["GITHUB_WORKFLOW"] = "build",
@@ -43,7 +45,7 @@ public sealed class ResourceRunTests(TestContext testContext)
             ["GITHUB_JOB"] = "test",
             ["GITHUB_REF_NAME"] = "main",
             ["GITHUB_SHA"] = "0123abc",
-            ["GITHUB_REPOSITORY"] = "shop/checkout",
+            ["GITHUB_REPOSITORY"] = "shop/checkout"
         });
 
         Assert.AreEqual("github_actions", resource["cicd.provider.name"]);
@@ -62,6 +64,7 @@ public sealed class ResourceRunTests(TestContext testContext)
             testContext.CancellationToken,
             "--filter", $"ClassName={typeof(CheckoutTests).FullName}");
 
-        return Assert.ContainsSingle(run.ReadSpans().Select(static span => span.Resource).DistinctBy(static resource => resource["service.instance.id"]));
+        return Assert.ContainsSingle(run.ReadSpans().Select(static span => span.Resource)
+            .DistinctBy(static resource => resource["service.instance.id"]));
     }
 }

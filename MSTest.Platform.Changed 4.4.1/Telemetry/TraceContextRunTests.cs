@@ -1,10 +1,10 @@
 namespace MSTest.Platform.Changed.Telemetry;
 
 /// <summary>
-/// A run that is started with the W3C trace context of its caller in <c>TRACEPARENT</c> and
-/// <c>TRACESTATE</c> belongs to the trace of the caller: every span has the trace identifier and the state
-/// of the caller, and the span of the run, <c>TestHost</c>, is a child of the span of the caller. Without
-/// the variables the span of the run has no parent.
+///     A run that is started with the W3C trace context of its caller in <c>TRACEPARENT</c> and
+///     <c>TRACESTATE</c> belongs to the trace of the caller: every span has the trace identifier and the state
+///     of the caller, and the span of the run, <c>TestHost</c>, is a child of the span of the caller. Without
+///     the variables the span of the run has no parent.
 /// </summary>
 [TestClass]
 public sealed class TraceContextRunTests(TestContext testContext)
@@ -16,10 +16,12 @@ public sealed class TraceContextRunTests(TestContext testContext)
     [TestMethod]
     public async Task Run_continues_the_trace_of_its_caller()
     {
-        using var run = await RunTheCheckoutAsync(new() { ["TRACEPARENT"] = $"00-{Trace}-{Caller}-01", ["TRACESTATE"] = State });
+        using var run = await RunTheCheckoutAsync(new Dictionary<string, string>
+            { ["TRACEPARENT"] = $"00-{Trace}-{Caller}-01", ["TRACESTATE"] = State });
         var spans = run.ReadSpans();
 
-        Assert.AreSequenceEqual([(Trace, State)], spans.Select(static span => (span.TraceId, span.TraceState)).Distinct());
+        Assert.AreSequenceEqual([(Trace, State)],
+            spans.Select(static span => (span.TraceId, span.TraceState)).Distinct());
         Assert.AreEqual(Caller, spans.Single(static span => span.Name == "TestHost").ParentSpanId);
     }
 
@@ -34,6 +36,9 @@ public sealed class TraceContextRunTests(TestContext testContext)
         Assert.IsNull(host.TraceState);
     }
 
-    private Task<TestApplicationRun> RunTheCheckoutAsync(Dictionary<string, string> environment) =>
-        TestApplicationRun.StartAsync(environment, testContext.CancellationToken, "--filter", $"ClassName={typeof(CheckoutTests).FullName}");
+    private Task<TestApplicationRun> RunTheCheckoutAsync(Dictionary<string, string> environment)
+    {
+        return TestApplicationRun.StartAsync(environment, testContext.CancellationToken, "--filter",
+            $"ClassName={typeof(CheckoutTests).FullName}");
+    }
 }

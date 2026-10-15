@@ -1,11 +1,11 @@
 namespace MSTest.Packaging.Satellites;
 
 /// <summary>
-/// A Microsoft.Testing.Platform project (EnableMSTestRunner, which MSTest.Sdk sets) without
-/// SatelliteResourceLanguages gets the satellite assemblies of the adapter in every language of the
-/// MSTest.TestAdapter package, whatever the culture of the build machine. The build copies
-/// MSTest.TestAdapter.resources.dll and MSTestAdapter.PlatformServices.resources.dll into the output folder, one
-/// folder per language.
+///     A Microsoft.Testing.Platform project (EnableMSTestRunner, which MSTest.Sdk sets) without
+///     SatelliteResourceLanguages gets the satellite assemblies of the adapter in every language of the
+///     MSTest.TestAdapter package, whatever the culture of the build machine. The build copies
+///     MSTest.TestAdapter.resources.dll and MSTestAdapter.PlatformServices.resources.dll into the output folder, one
+///     folder per language.
 /// </summary>
 [TestClass]
 public sealed class EveryLanguageTests
@@ -19,7 +19,7 @@ public sealed class EveryLanguageTests
         [
             .. Directory.GetFiles(AppContext.BaseDirectory, assembly, SearchOption.AllDirectories)
                 .Select(file => Path.GetRelativePath(AppContext.BaseDirectory, Path.GetDirectoryName(file)!))
-                .Order(StringComparer.Ordinal),
+                .Order(StringComparer.Ordinal)
         ];
 
         Assert.AreSequenceEqual(

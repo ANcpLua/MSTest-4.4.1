@@ -3,11 +3,11 @@ using MSTest.Platform.Terminal;
 namespace MSTest.Platform.Coverage;
 
 /// <summary>
-/// What the test host makes of the coverage that <see cref="FixedCoverageCollector"/> reports. The terminal
-/// prints <c>Code Coverage Summary:</c> with the measurements of the whole run and of each module, one line
-/// for each metric, and <c>Coverage Threshold Results:</c> with each check. A run whose tests pass ends with
-/// exit code 14 when a check fails. A failed test keeps its own exit code.
-/// <see cref="CoverageDigest"/> shows the same coverage as an extension reads it.
+///     What the test host makes of the coverage that <see cref="FixedCoverageCollector" /> reports. The terminal
+///     prints <c>Code Coverage Summary:</c> with the measurements of the whole run and of each module, one line
+///     for each metric, and <c>Coverage Threshold Results:</c> with each check. A run whose tests pass ends with
+///     exit code 14 when a check fails. A failed test keeps its own exit code.
+///     <see cref="CoverageDigest" /> shows the same coverage as an extension reads it.
 /// </summary>
 [TestClass]
 public sealed class CoverageRunTests(TestContext testContext)
@@ -23,7 +23,7 @@ public sealed class CoverageRunTests(TestContext testContext)
     [TestMethod]
     public async Task Summary_lists_the_measurements_of_the_run_and_of_the_module()
     {
-        using var run = await RunAsync(StockCounts, coveredLines: 170);
+        using var run = await RunAsync(StockCounts, 170);
 
         Assert.AreSequenceEqual(
             ["Total - Line: 85.0%", "Total - Branch: 75.0%", $"{FixedCoverageCollector.Module} - Line: 85.0%"],
@@ -33,7 +33,7 @@ public sealed class CoverageRunTests(TestContext testContext)
     [TestMethod]
     public async Task Check_that_is_met_is_listed_and_the_run_succeeds()
     {
-        using var run = await RunAsync(StockCounts, coveredLines: 170);
+        using var run = await RunAsync(StockCounts, 170);
 
         Assert.AreSequenceEqual(["Total - Line: 85.0% >= 80.0% threshold"], run.LinesBelow(Thresholds));
         Assert.AreEqual(0, run.ExitCode);
@@ -42,7 +42,7 @@ public sealed class CoverageRunTests(TestContext testContext)
     [TestMethod]
     public async Task Check_that_is_missed_ends_a_run_of_passed_tests_with_exit_code_14()
     {
-        using var run = await RunAsync(StockCounts, coveredLines: 140);
+        using var run = await RunAsync(StockCounts, 140);
 
         Assert.AreSequenceEqual(["Total - Line: 70.0% < 80.0% threshold"], run.LinesBelow(Thresholds));
         Assert.AreEqual(CoverageThresholdFailed, run.ExitCode);
@@ -51,7 +51,7 @@ public sealed class CoverageRunTests(TestContext testContext)
     [TestMethod]
     public async Task Failed_test_keeps_its_exit_code_when_a_check_is_missed_as_well()
     {
-        using var run = await RunAsync(Shipments, coveredLines: 140);
+        using var run = await RunAsync(Shipments, 140);
 
         Assert.AreSequenceEqual(["Total - Line: 70.0% < 80.0% threshold"], run.LinesBelow(Thresholds));
         Assert.AreEqual(AtLeastOneTestFailed, run.ExitCode);
@@ -60,14 +60,14 @@ public sealed class CoverageRunTests(TestContext testContext)
     [TestMethod]
     public async Task Extension_reads_the_measurements_the_checks_and_the_report()
     {
-        using var run = await RunAsync(StockCounts, coveredLines: 140);
+        using var run = await RunAsync(StockCounts, 140);
 
         Assert.Contains(
             $"Coverage by {nameof(FixedCoverageCollector)}: 140 of 200 lines, 3 scopes, below the threshold, Lcov report {FixedCoverageCollector.Report}",
             run.Output);
         Assert.AreSequenceEqual(
             ["SF:Shop/Basket.cs", "LF:200", "LH:140", "end_of_record"],
-            File.ReadAllLines(run.PathOf(FixedCoverageCollector.Report)));
+            await File.ReadAllLinesAsync(run.PathOf(FixedCoverageCollector.Report), testContext.CancellationToken));
     }
 
     [TestMethod]
@@ -79,10 +79,12 @@ public sealed class CoverageRunTests(TestContext testContext)
         Assert.DoesNotContain(Thresholds, run.Output);
     }
 
-    private Task<TestApplicationRun> RunAsync(string filter, int coveredLines) =>
-        TestApplicationRun.StartAsync(
+    private Task<TestApplicationRun> RunAsync(string filter, int coveredLines)
+    {
+        return TestApplicationRun.StartAsync(
             new Dictionary<string, string> { [FixedCoverageCollector.Variable] = $"{coveredLines}" },
             testContext.CancellationToken,
             "--filter",
             filter);
+    }
 }

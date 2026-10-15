@@ -1,9 +1,9 @@
 namespace MSTest.Assertions.CSharp12.SourceCompatibility;
 
 /// <summary>
-/// Pass collections that are a sequence and convert to a span as well, in a project that compiles as C# 12:
-/// a string as its characters, an <see cref="ArraySegment{T}"/>, a type with its own conversions.
-/// The calls bind to the overloads that take the type of the collection as a type argument.
+///     Pass collections that are a sequence and convert to a span as well, in a project that compiles as C# 12:
+///     a string as its characters, an <see cref="ArraySegment{T}" />, a type with its own conversions.
+///     The calls bind to the overloads that take the type of the collection as a type argument.
 /// </summary>
 [TestClass]
 public sealed class DualConvertibleCallTests
@@ -13,45 +13,45 @@ public sealed class DualConvertibleCallTests
     [TestMethod]
     public void String_as_its_characters()
     {
-        const string Code = "A7C";
+        const string code = "A7C";
         Func<char, bool> isDigit = char.IsDigit;
         Func<char, bool> isLower = char.IsLower;
-        EqualityComparer<char> characters = EqualityComparer<char>.Default;
+        var characters = EqualityComparer<char>.Default;
 
-        Assert.Contains('7', Code);
-        Assert.Contains('7', Code, characters);
-        Assert.Contains(isDigit, Code);
-        Assert.DoesNotContain('B', Code);
-        Assert.DoesNotContain('B', Code, characters);
-        Assert.DoesNotContain(isLower, Code);
-        Assert.AreEqual('7', Assert.ContainsSingle(isDigit, Code));
-        Assert.AreAllDistinct(Code, characters);
-        Assert.ContainsAll("CA", Code, characters);
-        Assert.DoesNotContainAll("AB", Code, characters);
-        Assert.AreSequenceEqual("A7C", Code, characters);
-        Assert.AreSequenceEqual("C7A", Code, characters, SequenceOrder.InAnyOrder);
-        Assert.AreNotSequenceEqual("C7A", Code, characters);
-        Assert.AreNotSequenceEqual("A7D", Code, characters, SequenceOrder.InAnyOrder);
+        Assert.Contains('7', code);
+        Assert.Contains('7', code, characters);
+        Assert.Contains(isDigit, code);
+        Assert.DoesNotContain('B', code);
+        Assert.DoesNotContain('B', code, characters);
+        Assert.DoesNotContain(isLower, code);
+        Assert.AreEqual('7', Assert.ContainsSingle(isDigit, code));
+        Assert.AreAllDistinct(code, characters);
+        Assert.ContainsAll("CA", code, characters);
+        Assert.DoesNotContainAll("AB", code, characters);
+        Assert.AreSequenceEqual("A7C", code, characters);
+        Assert.AreSequenceEqual("C7A", code, characters, SequenceOrder.InAnyOrder);
+        Assert.AreNotSequenceEqual("C7A", code, characters);
+        Assert.AreNotSequenceEqual("A7D", code, characters, SequenceOrder.InAnyOrder);
 
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.Contains('B', Code));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.DoesNotContain(isDigit, Code));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.ContainsSingle(isLower, Code));
+        Assert.ThrowsExactly<AssertFailedException>(() => Assert.Contains('B', code));
+        Assert.ThrowsExactly<AssertFailedException>(() => Assert.DoesNotContain(isDigit, code));
+        Assert.ThrowsExactly<AssertFailedException>(() => Assert.ContainsSingle(isLower, code));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllDistinct("A7A", characters));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.ContainsAll("AB", Code, characters));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.DoesNotContainAll("CA", Code, characters));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreSequenceEqual("C7A", Code, characters));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreNotSequenceEqual("A7C", Code, characters));
+        Assert.ThrowsExactly<AssertFailedException>(() => Assert.ContainsAll("AB", code, characters));
+        Assert.ThrowsExactly<AssertFailedException>(() => Assert.DoesNotContainAll("CA", code, characters));
+        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreSequenceEqual("C7A", code, characters));
+        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreNotSequenceEqual("A7C", code, characters));
     }
 
     [TestMethod]
     public void Array_segment()
     {
-        ArraySegment<int> codes = new(Buffer, offset: 1, count: 3);
-        ArraySegment<int> success = new(Buffer, offset: 1, count: 2);
-        ArraySegment<int> padding = new(Buffer, offset: 0, count: 2);
+        ArraySegment<int> codes = new(Buffer, 1, 3);
+        ArraySegment<int> success = new(Buffer, 1, 2);
+        ArraySegment<int> padding = new(Buffer, 0, 2);
         Func<int, bool> isError = code => code >= 400;
         Func<int, bool> isServerError = code => code >= 500;
-        EqualityComparer<int> numbers = EqualityComparer<int>.Default;
+        var numbers = EqualityComparer<int>.Default;
 
         Assert.Contains(404, codes);
         Assert.Contains(404, codes, numbers);
@@ -71,7 +71,8 @@ public sealed class DualConvertibleCallTests
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.Contains(0, codes));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.DoesNotContain(isError, codes));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.ContainsSingle(isServerError, codes));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllDistinct(new ArraySegment<int>(Buffer), numbers));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreAllDistinct(new ArraySegment<int>(Buffer), numbers));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.ContainsAll(padding, codes, numbers));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.DoesNotContainAll(success, codes, numbers));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreSequenceEqual(success, codes, numbers));
@@ -87,7 +88,7 @@ public sealed class DualConvertibleCallTests
         Playlist encore = new("theme", "reprise");
         Func<string, bool> startsWithT = track => track.StartsWith('t');
         Func<string, bool> startsWithR = track => track.StartsWith('r');
-        StringComparer ignoreCase = StringComparer.OrdinalIgnoreCase;
+        var ignoreCase = StringComparer.OrdinalIgnoreCase;
 
         Assert.Contains("theme", playlist);
         Assert.Contains("THEME", playlist, ignoreCase);
@@ -107,7 +108,8 @@ public sealed class DualConvertibleCallTests
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.Contains("reprise", playlist));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.DoesNotContain(startsWithT, playlist));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.ContainsSingle(startsWithR, playlist));
-        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreAllDistinct(new Playlist("intro", "INTRO"), ignoreCase));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreAllDistinct(new Playlist("intro", "INTRO"), ignoreCase));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.ContainsAll(encore, playlist, ignoreCase));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.DoesNotContainAll(opening, playlist, ignoreCase));
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreSequenceEqual(opening, playlist, ignoreCase));

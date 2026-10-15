@@ -1,8 +1,8 @@
 namespace MSTest.Assertions.Spans;
 
 /// <summary>
-/// Look for elements in a span or a memory region: one value, a match for a predicate, a set of values,
-/// or exactly one element, which <c>ContainsSingle</c> returns.
+///     Look for elements in a span or a memory region: one value, a match for a predicate, a set of values,
+///     or exactly one element, which <c>ContainsSingle</c> returns.
 /// </summary>
 [TestClass]
 public sealed class ContainmentTests
@@ -40,8 +40,8 @@ public sealed class ContainmentTests
         Assert.Contains("GET", new Span<string>(Methods), StringComparer.OrdinalIgnoreCase);
         Assert.Contains(code => code >= 400, new Memory<int>(Codes));
 
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.Contains(code => code >= 500, new ReadOnlyMemory<int>(Codes)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.Contains(code => code >= 500, new ReadOnlyMemory<int>(Codes)));
     }
 
     [TestMethod]
@@ -67,12 +67,12 @@ public sealed class ContainmentTests
     {
         Assert.DoesNotContain(code => code >= 500, new ReadOnlyMemory<int>(Codes));
 
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.DoesNotContain("GET", new Span<string>(Methods), StringComparer.OrdinalIgnoreCase));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.DoesNotContain("GET", new ReadOnlySpan<string>(Methods), StringComparer.OrdinalIgnoreCase));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.DoesNotContain(code => code >= 400, new Memory<int>(Codes)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.DoesNotContain("GET", new Span<string>(Methods), StringComparer.OrdinalIgnoreCase));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.DoesNotContain("GET", new ReadOnlySpan<string>(Methods), StringComparer.OrdinalIgnoreCase));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.DoesNotContain(code => code >= 400, new Memory<int>(Codes)));
     }
 
     [TestMethod]
@@ -87,22 +87,24 @@ public sealed class ContainmentTests
     [TestMethod]
     public void ContainsAll_fails_when_one_expected_value_is_missing()
     {
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.ContainsAll(new Span<int>(SuccessAndFailure), new Span<int>(Codes)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.ContainsAll(new ReadOnlySpan<int>(SuccessAndFailure), new ReadOnlySpan<int>(Codes)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.ContainsAll(new Memory<int>(SuccessAndFailure), new Memory<int>(Codes)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.ContainsAll(new ReadOnlyMemory<int>(SuccessAndFailure), new ReadOnlyMemory<int>(Codes)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.ContainsAll(new Span<int>(SuccessAndFailure), new Span<int>(Codes)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.ContainsAll(new ReadOnlySpan<int>(SuccessAndFailure), new ReadOnlySpan<int>(Codes)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.ContainsAll(new Memory<int>(SuccessAndFailure), new Memory<int>(Codes)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.ContainsAll(new ReadOnlyMemory<int>(SuccessAndFailure), new ReadOnlyMemory<int>(Codes)));
     }
 
     [TestMethod]
     public void ContainsAll_takes_a_comparer()
     {
         Assert.ContainsAll(
-            new ReadOnlySpan<string>(UpperMethods), new ReadOnlySpan<string>(Methods), StringComparer.OrdinalIgnoreCase);
-        Assert.ContainsAll(new Memory<string>(UpperMethods), new Memory<string>(Methods), StringComparer.OrdinalIgnoreCase);
+            new ReadOnlySpan<string>(UpperMethods), new ReadOnlySpan<string>(Methods),
+            StringComparer.OrdinalIgnoreCase);
+        Assert.ContainsAll(new Memory<string>(UpperMethods), new Memory<string>(Methods),
+            StringComparer.OrdinalIgnoreCase);
     }
 
     [TestMethod]
@@ -117,24 +119,24 @@ public sealed class ContainmentTests
     [TestMethod]
     public void DoesNotContainAll_fails_when_every_value_is_present()
     {
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.DoesNotContainAll(new Span<int>(Success), new Span<int>(Codes)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.DoesNotContainAll(new ReadOnlySpan<int>(Success), new ReadOnlySpan<int>(Codes)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.DoesNotContainAll(new Memory<int>(Success), new Memory<int>(Codes)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.DoesNotContainAll(new ReadOnlyMemory<int>(Success), new ReadOnlyMemory<int>(Codes)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.DoesNotContainAll(new Span<int>(Success), new Span<int>(Codes)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.DoesNotContainAll(new ReadOnlySpan<int>(Success), new ReadOnlySpan<int>(Codes)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.DoesNotContainAll(new Memory<int>(Success), new Memory<int>(Codes)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.DoesNotContainAll(new ReadOnlyMemory<int>(Success), new ReadOnlyMemory<int>(Codes)));
     }
 
     [TestMethod]
     public void DoesNotContainAll_takes_a_comparer()
     {
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.DoesNotContainAll(new Span<string>(UpperMethods), new Span<string>(Methods), StringComparer.OrdinalIgnoreCase));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.DoesNotContainAll(
-                new ReadOnlyMemory<string>(UpperMethods), new ReadOnlyMemory<string>(Methods), StringComparer.OrdinalIgnoreCase));
+        Assert.ThrowsExactly<AssertFailedException>(() => Assert.DoesNotContainAll(new Span<string>(UpperMethods),
+            new Span<string>(Methods), StringComparer.OrdinalIgnoreCase));
+        Assert.ThrowsExactly<AssertFailedException>(() => Assert.DoesNotContainAll(
+            new ReadOnlyMemory<string>(UpperMethods), new ReadOnlyMemory<string>(Methods),
+            StringComparer.OrdinalIgnoreCase));
     }
 
     [TestMethod]
@@ -163,22 +165,27 @@ public sealed class ContainmentTests
         Assert.AreEqual(404, Assert.ContainsSingle(code => code >= 400, new Memory<int>(Codes)));
         Assert.AreEqual(404, Assert.ContainsSingle(code => code >= 400, new ReadOnlyMemory<int>(Codes)));
 
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.ContainsSingle(code => code < 400, new ReadOnlySpan<int>(Codes)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.ContainsSingle(code => code < 400, new ReadOnlySpan<int>(Codes)));
     }
 
     // An interpolated message is formatted only when the assertion fails.
     [TestMethod]
     public void Interpolated_message_is_formatted_on_failure_only()
     {
-        int formatted = 0;
-        string Count() => $"{Codes.Length} codes, formatted {++formatted} time(s)";
+        var formatted = 0;
 
         Assert.AreEqual(200, Assert.ContainsSingle(new Span<int>(OnlyCode), $"ambiguous: {Count()}"));
         Assert.AreEqual(0, formatted);
 
-        AssertFailedException failure = Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.ContainsSingle(new ReadOnlyMemory<int>(Codes), $"ambiguous: {Count()}"));
+        var failure = Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.ContainsSingle(new ReadOnlyMemory<int>(Codes), $"ambiguous: {Count()}"));
         Assert.Contains("ambiguous: 3 codes, formatted 1 time(s)", failure.Message);
+        return;
+
+        string Count()
+        {
+            return $"{Codes.Length} codes, formatted {++formatted} time(s)";
+        }
     }
 }

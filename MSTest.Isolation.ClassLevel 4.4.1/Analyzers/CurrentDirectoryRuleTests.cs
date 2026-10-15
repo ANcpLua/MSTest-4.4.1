@@ -1,9 +1,9 @@
 namespace MSTest.Isolation.ClassLevel.Analyzers;
 
 /// <summary>
-/// MSTEST0075 reports a test that changes the current directory, by Directory.SetCurrentDirectory or by
-/// assigning Environment.CurrentDirectory, without declaring the lock for it. Its code fix adds
-/// [ResourceLock(WellKnownResources.CurrentDirectory)] to the test.
+///     MSTEST0075 reports a test that changes the current directory, by Directory.SetCurrentDirectory or by
+///     assigning Environment.CurrentDirectory, without declaring the lock for it. Its code fix adds
+///     [ResourceLock(WellKnownResources.CurrentDirectory)] to the test.
 /// </summary>
 [TestClass]
 public sealed class CurrentDirectoryRuleTests(TestContext testContext)
@@ -12,8 +12,8 @@ public sealed class CurrentDirectoryRuleTests(TestContext testContext)
     [TestMethod]
     public void Directory_entered_without_a_lock_is_reported()
     {
-        string entered = testContext.TestTempDirectory!;
-        string previous = Directory.GetCurrentDirectory();
+        var entered = testContext.TestTempDirectory!;
+        var previous = Directory.GetCurrentDirectory();
         Directory.SetCurrentDirectory(entered);
 
         try
@@ -31,8 +31,8 @@ public sealed class CurrentDirectoryRuleTests(TestContext testContext)
     [ResourceLock(WellKnownResources.CurrentDirectory)]
     public void Directory_entered_under_the_lock_is_accepted()
     {
-        string entered = testContext.TestTempDirectory!;
-        string previous = Directory.GetCurrentDirectory();
+        var entered = testContext.TestTempDirectory!;
+        var previous = Directory.GetCurrentDirectory();
         Directory.SetCurrentDirectory(entered);
 
         try
@@ -49,8 +49,8 @@ public sealed class CurrentDirectoryRuleTests(TestContext testContext)
     [TestMethod]
     public void Directory_assigned_without_a_lock_is_reported()
     {
-        string entered = testContext.TestTempDirectory!;
-        string previous = Environment.CurrentDirectory;
+        var entered = testContext.TestTempDirectory!;
+        var previous = Environment.CurrentDirectory;
         Environment.CurrentDirectory = entered;
 
         try
@@ -68,8 +68,8 @@ public sealed class CurrentDirectoryRuleTests(TestContext testContext)
     [ResourceLock(WellKnownResources.CurrentDirectory)]
     public void Directory_assigned_under_the_lock_is_accepted()
     {
-        string entered = testContext.TestTempDirectory!;
-        string previous = Environment.CurrentDirectory;
+        var entered = testContext.TestTempDirectory!;
+        var previous = Environment.CurrentDirectory;
         Environment.CurrentDirectory = entered;
 
         try

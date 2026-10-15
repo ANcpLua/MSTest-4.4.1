@@ -4,6 +4,8 @@ namespace MSTest.Assertions.CSharp12.SourceCompatibility;
 /// Pass arrays to the collection assertions in a project that compiles as C# 12. The calls bind to the overloads
 /// that take an array, whether the element type is written out or inferred from another argument.
 /// </summary>
+// These calls compare explicit generic arguments with inference under C# 12.
+// ReSharper disable RedundantTypeArgumentsOfMethod
 [TestClass]
 public sealed class ArrayCallTests
 {
@@ -48,7 +50,7 @@ public sealed class ArrayCallTests
     [TestMethod]
     public void Element_type_inferred_from_the_comparer()
     {
-        StringComparer ignoreCase = StringComparer.OrdinalIgnoreCase;
+        var ignoreCase = StringComparer.OrdinalIgnoreCase;
 
         Assert.AreAllDistinct(Methods, ignoreCase);
         Assert.Contains("GET", Methods, ignoreCase);
@@ -101,18 +103,19 @@ public sealed class ArrayCallTests
     [TestMethod]
     public void Interpolated_message_is_formatted_on_failure_only()
     {
-        int formatted = 0;
-        string Count() => $"{Codes.Length} codes, formatted {++formatted} time(s)";
-
+        var formatted = 0;
         Assert.HasCount<int>(3, Codes, $"unexpected: {Count()}");
         Assert.IsNotEmpty<int>(Codes, $"unexpected: {Count()}");
         Assert.IsEmpty<int>(NoCodes, $"unexpected: {Count()}");
         Assert.AreEqual(200, Assert.ContainsSingle<int>(OnlyCode, $"unexpected: {Count()}"));
         Assert.AreEqual(0, formatted);
 
-        AssertFailedException failure = Assert.ThrowsExactly<AssertFailedException>(
+        var failure = Assert.ThrowsExactly<AssertFailedException>(
             () => Assert.HasCount<int>(2, Codes, $"unexpected: {Count()}"));
         Assert.Contains("unexpected: 3 codes, formatted 1 time(s)", failure.Message);
+        return;
+
+        string Count() => $"{Codes.Length} codes, formatted {++formatted} time(s)";
     }
 
     // An array next to a list binds to the overloads that take an array and an IEnumerable<T>.
@@ -132,3 +135,5 @@ public sealed class ArrayCallTests
         Assert.ThrowsExactly<AssertFailedException>(() => Assert.DoesNotContainAll(Success, received));
     }
 }
+
+// ReSharper restore RedundantTypeArgumentsOfMethod

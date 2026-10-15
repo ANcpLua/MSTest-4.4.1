@@ -5,14 +5,15 @@ using MSTest.Showcase;
 namespace MSTest.Platform.Fixed.WebAssembly;
 
 /// <summary>
-/// A test application for browser-wasm writes its TRX report with <c>--report-trx</c> and runs with the Azure
-/// DevOps extension, which creates its HTTP client when the test host builds its extensions. Its output names
-/// every file that a test or the run produces, the TRX report as well, with the display name of the file and its
-/// path in the virtual file system of the browser-wasm runtime, which is not a path on the disk of the machine.
-/// Here the example starts MSTest.Platform.Fixed.Browser 4.4.1, whose one test attaches a file with
-/// <c>TestContext.AddResultFile</c>, by publishing its bundle and running <c>wwwroot/runtests.mjs</c> under Node.
-/// Publishing is part of this fixture's setup; no browser DLL is sent to the desktop test driver. The project references
-/// the packages Microsoft.Testing.Extensions.TrxReport and Microsoft.Testing.Extensions.AzureDevOpsReport.
+///     A test application for browser-wasm writes its TRX report with <c>--report-trx</c> and runs with the Azure
+///     DevOps extension, which creates its HTTP client when the test host builds its extensions. Its output names
+///     every file that a test or the run produces, the TRX report as well, with the display name of the file and its
+///     path in the virtual file system of the browser-wasm runtime, which is not a path on the disk of the machine.
+///     Here the example starts MSTest.Platform.Fixed.Browser 4.4.1, whose one test attaches a file with
+///     <c>TestContext.AddResultFile</c>, by publishing its bundle and running <c>wwwroot/runtests.mjs</c> under Node.
+///     Publishing is part of this fixture's setup; no browser DLL is sent to the desktop test driver. The project
+///     references
+///     the packages Microsoft.Testing.Extensions.TrxReport and Microsoft.Testing.Extensions.AzureDevOpsReport.
 /// </summary>
 [TestClass]
 public sealed class BrowserArtifactRunTests
@@ -33,11 +34,14 @@ public sealed class BrowserArtifactRunTests
         {
             var publish = Path.Combine(results.FullName, "publish");
             var start = new ProcessStartInfo("dotnet",
-                ["publish", Project, "--configuration", "Debug", "--output", publish, "--nologo", "--disable-build-servers"])
+            [
+                "publish", Project, "--configuration", "Debug", "--output", publish, "--nologo",
+                "--disable-build-servers"
+            ])
             {
                 WorkingDirectory = Path.GetDirectoryName(Project)!,
                 RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                RedirectStandardError = true
             };
             await using (var child = ChildProcess.Start(start, testContext.CancellationToken))
             {
@@ -59,13 +63,16 @@ public sealed class BrowserArtifactRunTests
         }
         catch
         {
-            results.Delete(recursive: true);
+            results.Delete(true);
             throw;
         }
     }
 
     [ClassCleanup]
-    public static void DeleteTheResults() => _run.Dispose();
+    public static void DeleteTheResults()
+    {
+        _run.Dispose();
+    }
 
     [TestMethod]
     public void Output_names_the_TRX_report_with_its_virtual_path()
@@ -75,9 +82,13 @@ public sealed class BrowserArtifactRunTests
     }
 
     [TestMethod]
-    public void Output_names_the_file_that_the_test_attached() =>
+    public void Output_names_the_file_that_the_test_attached()
+    {
         Assert.ContainsSingle(
-            _run.Output.Split('\n').Where(static line => line.StartsWith("MSTestAdapterV2: ", StringComparison.Ordinal) && line.EndsWith("/signed-delivery-note.txt", StringComparison.Ordinal)));
+            _run.Output.Split('\n').Where(static line =>
+                line.StartsWith("MSTestAdapterV2: ", StringComparison.Ordinal) &&
+                line.EndsWith("/signed-delivery-note.txt", StringComparison.Ordinal)));
+    }
 
     [TestMethod]
     public void Run_passes()

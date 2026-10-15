@@ -1,11 +1,9 @@
-using System.Reflection;
-
 namespace MSTest.Packaging.AdapterDependencies;
 
 /// <summary>
-/// The test host runs the tests with MSTest.TestAdapter and without
-/// Microsoft.Testing.Extensions.VSTestBridge: the bridge is not among the loaded assemblies, and the adapter
-/// assembly has no reference to it.
+///     The test host runs the tests with MSTest.TestAdapter and without
+///     Microsoft.Testing.Extensions.VSTestBridge: the bridge is not among the loaded assemblies, and the adapter
+///     assembly has no reference to it.
 /// </summary>
 [TestClass]
 public sealed class TestHostTests
@@ -22,7 +20,7 @@ public sealed class TestHostTests
     [TestMethod]
     public void The_adapter_assembly_does_not_reference_the_VSTest_bridge()
     {
-        Assembly adapter = AppDomain.CurrentDomain.GetAssemblies()
+        var adapter = AppDomain.CurrentDomain.GetAssemblies()
             .Single(assembly => assembly.GetName().Name == "MSTest.TestAdapter");
 
         string?[] references = [.. adapter.GetReferencedAssemblies().Select(reference => reference.Name)];

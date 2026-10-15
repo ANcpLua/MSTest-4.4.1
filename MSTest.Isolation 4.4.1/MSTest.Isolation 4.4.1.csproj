@@ -2,6 +2,7 @@
 
     <PropertyGroup>
         <RootNamespace>MSTest.Isolation</RootNamespace>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>

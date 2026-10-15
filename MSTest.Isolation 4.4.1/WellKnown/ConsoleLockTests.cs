@@ -1,8 +1,8 @@
 namespace MSTest.Isolation.WellKnown;
 
 /// <summary>
-/// WellKnownResources.Console is the key for the console of the process. Each row redirects Console.Out and
-/// finds only its own line in the writer because the other row waits for the lock.
+///     WellKnownResources.Console is the key for the console of the process. Each row redirects Console.Out and
+///     finds only its own line in the writer because the other row waits for the lock.
 /// </summary>
 [TestClass]
 public sealed class ConsoleLockTests(TestContext testContext)
@@ -15,8 +15,8 @@ public sealed class ConsoleLockTests(TestContext testContext)
     [DataRow("second line")]
     public async Task Captures_the_line_it_wrote(string line)
     {
-        TextWriter previous = Console.Out;
-        using StringWriter captured = new();
+        var previous = Console.Out;
+        await using StringWriter captured = new();
         Console.SetOut(captured);
 
         try

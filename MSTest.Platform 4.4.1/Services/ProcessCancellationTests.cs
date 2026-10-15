@@ -1,10 +1,11 @@
 using System.Diagnostics;
+using System.Globalization;
 
 namespace MSTest.Platform.Services;
 
 /// <summary>
-/// Cancels a real run of this application after it has started a descendant. The process helper must
-/// terminate the tree before propagating cancellation to its caller.
+///     Cancels a real run of this application after it has started a descendant. The process helper must
+///     terminate the tree before propagating cancellation to its caller.
 /// </summary>
 [TestClass]
 public sealed class ProcessCancellationTests(TestContext testContext)
@@ -19,22 +20,18 @@ public sealed class ProcessCancellationTests(TestContext testContext)
         deadline.CancelAfter(TimeSpan.FromSeconds(15));
         var running = TestApplicationRun.StartAsync(results,
             new Dictionary<string, string> { [ProcessTreeProbeTests.PidFile] = pids }, cancellation.Token,
-            "--filter", $"ClassName={typeof(ProcessTreeProbeTests).FullName}&Name={nameof(ProcessTreeProbeTests.Starts_a_descendant_and_waits)}");
+            "--filter",
+            $"ClassName={typeof(ProcessTreeProbeTests).FullName}&Name={nameof(ProcessTreeProbeTests.Starts_a_descendant_and_waits)}");
 
         var processes = new List<Process>();
         try
         {
-            while (!File.Exists(pids))
-            {
-                await Task.Delay(10, deadline.Token);
-            }
+            while (!File.Exists(pids)) await Task.Delay(10, deadline.Token);
 
-            foreach (var pid in await File.ReadAllLinesAsync(pids, deadline.Token))
-            {
-                processes.Add(Process.GetProcessById(int.Parse(pid, System.Globalization.CultureInfo.InvariantCulture)));
-            }
+            processes.AddRange((await File.ReadAllLinesAsync(pids, deadline.Token))
+                .Select(static pid => Process.GetProcessById(int.Parse(pid, CultureInfo.InvariantCulture))));
 
-            cancellation.Cancel();
+            await cancellation.CancelAsync();
             await Assert.ThrowsAsync<OperationCanceledException>(() => running.WaitAsync(deadline.Token));
 
             Assert.IsTrue(processes[0].HasExited, "The helper must await the child before returning cancellation.");
@@ -43,16 +40,12 @@ public sealed class ProcessCancellationTests(TestContext testContext)
         }
         finally
         {
-            cancellation.Cancel();
+            await cancellation.CancelAsync();
             // Keep the regression safe even when the process helper stops terminating children.
             foreach (var process in processes)
-            {
                 try
                 {
-                    if (!process.HasExited)
-                    {
-                        process.Kill(entireProcessTree: true);
-                    }
+                    if (!process.HasExited) process.Kill(true);
 
                     await process.WaitForExitAsync(CancellationToken.None);
                 }
@@ -60,7 +53,6 @@ public sealed class ProcessCancellationTests(TestContext testContext)
                 {
                     process.Dispose();
                 }
-            }
 
             try
             {

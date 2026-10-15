@@ -1,5 +1,7 @@
 namespace MSTest.Assertions.Spans;
 
+// Assert.AreEquivalent reads these public properties through reflection.
+// ReSharper disable UnusedMember.Global
 internal sealed class Reading(string sensor, double value)
 {
     public string Sensor { get; } = sensor;
@@ -16,9 +18,11 @@ internal sealed class CalibratedReading(string sensor, double value, double offs
     public double Offset { get; } = offset;
 }
 
+// ReSharper restore UnusedMember.Global
+
 /// <summary>
-/// Compare two spans or two memory regions: element by element with <c>AreSequenceEqual</c>,
-/// member by member with <c>AreEquivalent</c>.
+///     Compare two spans or two memory regions: element by element with <c>AreSequenceEqual</c>,
+///     member by member with <c>AreEquivalent</c>.
 /// </summary>
 [TestClass]
 public sealed class ComparisonTests
@@ -51,14 +55,14 @@ public sealed class ComparisonTests
     [TestMethod]
     public void AreSequenceEqual_fails_for_another_order()
     {
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreSequenceEqual(new Span<int>(Samples), new Span<int>(ReversedSamples)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreSequenceEqual(new ReadOnlySpan<int>(Samples), new ReadOnlySpan<int>(ReversedSamples)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreSequenceEqual(new Memory<int>(Samples), new Memory<int>(ReversedSamples)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreSequenceEqual(new ReadOnlyMemory<int>(Samples), new ReadOnlyMemory<int>(ReversedSamples)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreSequenceEqual(new Span<int>(Samples), new Span<int>(ReversedSamples)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreSequenceEqual(new ReadOnlySpan<int>(Samples), new ReadOnlySpan<int>(ReversedSamples)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreSequenceEqual(new Memory<int>(Samples), new Memory<int>(ReversedSamples)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreSequenceEqual(new ReadOnlyMemory<int>(Samples), new ReadOnlyMemory<int>(ReversedSamples)));
     }
 
     [TestMethod]
@@ -73,8 +77,8 @@ public sealed class ComparisonTests
             StringComparer.OrdinalIgnoreCase,
             SequenceOrder.InAnyOrder);
 
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreSequenceEqual(new Memory<int>(Samples), new Memory<int>(OtherSamples), SequenceOrder.InAnyOrder));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreSequenceEqual(new Memory<int>(Samples), new Memory<int>(OtherSamples), SequenceOrder.InAnyOrder));
     }
 
     [TestMethod]
@@ -89,14 +93,14 @@ public sealed class ComparisonTests
     [TestMethod]
     public void AreNotSequenceEqual_fails_for_equal_elements_in_the_same_order()
     {
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotSequenceEqual(new Span<int>(Samples), new Span<int>(SameSamples)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotSequenceEqual(new ReadOnlySpan<int>(Samples), new ReadOnlySpan<int>(SameSamples)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotSequenceEqual(new Memory<int>(Samples), new Memory<int>(SameSamples)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotSequenceEqual(new ReadOnlyMemory<int>(Samples), new ReadOnlyMemory<int>(SameSamples)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreNotSequenceEqual(new Span<int>(Samples), new Span<int>(SameSamples)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreNotSequenceEqual(new ReadOnlySpan<int>(Samples), new ReadOnlySpan<int>(SameSamples)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreNotSequenceEqual(new Memory<int>(Samples), new Memory<int>(SameSamples)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreNotSequenceEqual(new ReadOnlyMemory<int>(Samples), new ReadOnlyMemory<int>(SameSamples)));
     }
 
     [TestMethod]
@@ -104,17 +108,16 @@ public sealed class ComparisonTests
     {
         Assert.AreNotSequenceEqual(new Span<int>(Samples), new Span<int>(OtherSamples), SequenceOrder.InAnyOrder);
 
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotSequenceEqual(
-                new ReadOnlySpan<string>(Codes), new ReadOnlySpan<string>(UpperCodes), StringComparer.OrdinalIgnoreCase));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotSequenceEqual(new Memory<int>(Samples), new Memory<int>(ReversedSamples), SequenceOrder.InAnyOrder));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotSequenceEqual(
-                new ReadOnlyMemory<string>(Codes),
-                new ReadOnlyMemory<string>(ReversedUpperCodes),
-                StringComparer.OrdinalIgnoreCase,
+        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreNotSequenceEqual(
+            new ReadOnlySpan<string>(Codes), new ReadOnlySpan<string>(UpperCodes), StringComparer.OrdinalIgnoreCase));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreNotSequenceEqual(new Memory<int>(Samples), new Memory<int>(ReversedSamples),
                 SequenceOrder.InAnyOrder));
+        Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreNotSequenceEqual(
+            new ReadOnlyMemory<string>(Codes),
+            new ReadOnlyMemory<string>(ReversedUpperCodes),
+            StringComparer.OrdinalIgnoreCase,
+            SequenceOrder.InAnyOrder));
     }
 
     // Reading has no equality of its own: two instances are equivalent when their public members are.
@@ -126,34 +129,34 @@ public sealed class ComparisonTests
         Assert.AreEquivalent(new Memory<Reading>(Readings), new Memory<Reading>(SameReadings));
         Assert.AreEquivalent(new ReadOnlyMemory<Reading>(Readings), new ReadOnlyMemory<Reading>(SameReadings));
 
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreSequenceEqual(new ReadOnlySpan<Reading>(Readings), new ReadOnlySpan<Reading>(SameReadings)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreSequenceEqual(new ReadOnlySpan<Reading>(Readings), new ReadOnlySpan<Reading>(SameReadings)));
     }
 
     [TestMethod]
     public void AreEquivalent_fails_for_a_member_that_differs()
     {
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreEquivalent(new Span<Reading>(Readings), new Span<Reading>(OtherReadings)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreEquivalent(new ReadOnlySpan<Reading>(Readings), new ReadOnlySpan<Reading>(OtherReadings)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreEquivalent(new Memory<Reading>(Readings), new Memory<Reading>(OtherReadings)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreEquivalent(new ReadOnlyMemory<Reading>(Readings), new ReadOnlyMemory<Reading>(OtherReadings)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreEquivalent(new Span<Reading>(Readings), new Span<Reading>(OtherReadings)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreEquivalent(new ReadOnlySpan<Reading>(Readings), new ReadOnlySpan<Reading>(OtherReadings)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreEquivalent(new Memory<Reading>(Readings), new Memory<Reading>(OtherReadings)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreEquivalent(new ReadOnlyMemory<Reading>(Readings), new ReadOnlyMemory<Reading>(OtherReadings)));
     }
 
     // Strict mode rejects members that only the actual element declares.
     [TestMethod]
     public void AreEquivalent_takes_the_strict_mode()
     {
-        Assert.AreEquivalent(new ReadOnlySpan<object>(Expected), new ReadOnlySpan<object>(Calibrated), strict: false);
-        Assert.AreEquivalent(new Memory<object>(Expected), new Memory<object>(Calibrated), strict: false);
+        Assert.AreEquivalent(new ReadOnlySpan<object>(Expected), new ReadOnlySpan<object>(Calibrated), false);
+        Assert.AreEquivalent(new Memory<object>(Expected), new Memory<object>(Calibrated), false);
 
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreEquivalent(new Span<object>(Expected), new Span<object>(Calibrated), strict: true));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreEquivalent(new ReadOnlyMemory<object>(Expected), new ReadOnlyMemory<object>(Calibrated), strict: true));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreEquivalent(new Span<object>(Expected), new Span<object>(Calibrated), true));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreEquivalent(new ReadOnlyMemory<object>(Expected), new ReadOnlyMemory<object>(Calibrated), true));
     }
 
     [TestMethod]
@@ -168,25 +171,25 @@ public sealed class ComparisonTests
     [TestMethod]
     public void AreNotEquivalent_fails_for_elements_with_equal_members()
     {
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotEquivalent(new Span<Reading>(Readings), new Span<Reading>(SameReadings)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotEquivalent(new ReadOnlySpan<Reading>(Readings), new ReadOnlySpan<Reading>(SameReadings)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotEquivalent(new Memory<Reading>(Readings), new Memory<Reading>(SameReadings)));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotEquivalent(new ReadOnlyMemory<Reading>(Readings), new ReadOnlyMemory<Reading>(SameReadings)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreNotEquivalent(new Span<Reading>(Readings), new Span<Reading>(SameReadings)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreNotEquivalent(new ReadOnlySpan<Reading>(Readings), new ReadOnlySpan<Reading>(SameReadings)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreNotEquivalent(new Memory<Reading>(Readings), new Memory<Reading>(SameReadings)));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreNotEquivalent(new ReadOnlyMemory<Reading>(Readings), new ReadOnlyMemory<Reading>(SameReadings)));
     }
 
     [TestMethod]
     public void AreNotEquivalent_takes_the_strict_mode()
     {
-        Assert.AreNotEquivalent(new Span<object>(Expected), new Span<object>(Calibrated), strict: true);
-        Assert.AreNotEquivalent(new ReadOnlyMemory<object>(Expected), new ReadOnlyMemory<object>(Calibrated), strict: true);
+        Assert.AreNotEquivalent(new Span<object>(Expected), new Span<object>(Calibrated), true);
+        Assert.AreNotEquivalent(new ReadOnlyMemory<object>(Expected), new ReadOnlyMemory<object>(Calibrated), true);
 
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotEquivalent(new ReadOnlySpan<object>(Expected), new ReadOnlySpan<object>(Calibrated), strict: false));
-        Assert.ThrowsExactly<AssertFailedException>(
-            () => Assert.AreNotEquivalent(new Memory<object>(Expected), new Memory<object>(Calibrated), strict: false));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreNotEquivalent(new ReadOnlySpan<object>(Expected), new ReadOnlySpan<object>(Calibrated), false));
+        Assert.ThrowsExactly<AssertFailedException>(() =>
+            Assert.AreNotEquivalent(new Memory<object>(Expected), new Memory<object>(Calibrated), false));
     }
 }

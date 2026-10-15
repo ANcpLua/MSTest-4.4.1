@@ -1,12 +1,14 @@
 namespace MSTest.Showcase;
 
 /// <summary>
-/// Marks a demonstration that fails, times out or is cancelled on purpose. It is skipped unless the run
-/// sets <c>MSTEST_EXPLICIT=1</c>, so an ordinary run stays green and the demonstration is run on request.
+///     Marks a demonstration that fails, times out or is cancelled on purpose. It is skipped unless the run
+///     sets <c>MSTEST_EXPLICIT=1</c>, so an ordinary run stays green and the demonstration is run on request.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = false)]
 public sealed class ExplicitAttribute() : ConditionBaseAttribute(ConditionMode.Include)
 {
+    // Shared across projects; the process launchers in consuming executables also use this switch.
+    // ReSharper disable once MemberCanBePrivate.Global
     public const string Variable = "MSTEST_EXPLICIT";
 
     public override string GroupName => nameof(ExplicitAttribute);

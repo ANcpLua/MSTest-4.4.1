@@ -4,11 +4,11 @@ using MSTest.Showcase;
 namespace MSTest.Reporting.Assertions;
 
 /// <summary>
-/// What a client of the server mode, such as the test explorer of an IDE, receives for failures of
-/// <see cref="FailingAssertionTests"/>. The node of a failed test carries the expected and the actual text of
-/// the <c>AssertionFailureProperty</c> under the keys <c>assert.expected</c> and <c>assert.actual</c>, next to
-/// <c>error.message</c>. The client of the package <c>Microsoft.Testing.Platform.ServerMode.Client.Sources</c>
-/// starts this test application in server mode, discovers its tests and runs three of them.
+///     What a client of the server mode, such as the test explorer of an IDE, receives for failures of
+///     <see cref="FailingAssertionTests" />. The node of a failed test carries the expected and the actual text of
+///     the <c>AssertionFailureProperty</c> under the keys <c>assert.expected</c> and <c>assert.actual</c>, next to
+///     <c>error.message</c>. The client of the package <c>Microsoft.Testing.Platform.ServerMode.Client.Sources</c>
+///     starts this test application in server mode, discovers its tests and runs three of them.
 /// </summary>
 [TestClass]
 public sealed class ServerModeClientTests
@@ -20,7 +20,7 @@ public sealed class ServerModeClientTests
     [
         nameof(FailingAssertionTests.Compares_two_numbers),
         nameof(FailingAssertionTests.Looks_for_an_item),
-        nameof(FailingAssertionTests.Fails_without_a_comparison),
+        nameof(FailingAssertionTests.Fails_without_a_comparison)
     ];
 
     private static List<MtpTestNodeUpdate> _failures = null!;
@@ -29,12 +29,14 @@ public sealed class ServerModeClientTests
     public static async Task RunThreeFailingAssertionsInServerMode(TestContext testContext)
     {
         var options = new MtpServerClientOptions { EnvironmentVariables = { [ExplicitAttribute.Variable] = "1" } };
-        using var client = await MtpServerClient.LaunchAsync(Environment.ProcessPath!, options, testContext.CancellationToken);
+        using var client =
+            await MtpServerClient.LaunchAsync(Environment.ProcessPath!, options, testContext.CancellationToken);
         var nodes = new List<MtpTestNodeUpdate>();
         client.TestNodesUpdated += (_, update) => nodes.AddRange(update.Changes);
         await client.InitializeAsync(testContext.CancellationToken);
         await client.DiscoverTestsAsync(testContext.CancellationToken);
-        var uids = nodes.Where(static node => Tests.Contains(node.DisplayName)).Select(static node => node.Uid!).ToList();
+        var uids = nodes.Where(static node => Tests.Contains(node.DisplayName)).Select(static node => node.Uid!)
+            .ToList();
         nodes.Clear();
 
         await client.RunTestsAsync(uids, testContext.CancellationToken);
@@ -72,6 +74,8 @@ public sealed class ServerModeClientTests
         Assert.AreEqual("15", FailureOf(nameof(FailingAssertionTests.Compares_two_numbers)).Node[Expected]);
     }
 
-    private static MtpTestNodeUpdate FailureOf(string test) =>
-        Assert.ContainsSingle(_failures.Where(failure => failure.DisplayName == test));
+    private static MtpTestNodeUpdate FailureOf(string test)
+    {
+        return Assert.ContainsSingle(_failures.Where(failure => failure.DisplayName == test));
+    }
 }

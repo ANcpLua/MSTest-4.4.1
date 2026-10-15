@@ -99,7 +99,7 @@ public sealed class OutcomeLogRunTests(TestContext testContext)
                 $"{nameof(ShipmentTests.Ships_a_paid_order)}:passed",
                 $"{nameof(ShipmentTests.Ships_an_order_that_costs_more_than_was_paid)}:failed",
                 $"{nameof(ShipmentTests.Waits_for_a_carrier_that_never_answers)}:failed",
-                $"{nameof(ShipmentTests.Ships_abroad)}:skipped",
+                $"{nameof(ShipmentTests.Ships_abroad)}:skipped"
             ],
             document.RootElement.EnumerateArray().Select(static entry => $"{entry.GetProperty("Name").GetString()}:{entry.GetProperty("State").GetString()}"),
             SequenceOrder.InAnyOrder);

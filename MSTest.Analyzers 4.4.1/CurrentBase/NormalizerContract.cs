@@ -1,12 +1,12 @@
 namespace MSTest.Analyzers.CurrentBase;
 
 /// <summary>
-/// A contract of a library that is compiled against MSTest.TestFramework 4.5.1, the version of the test
-/// project: the tests that every normalizer passes, for the test class of each normalizer to inherit.
+///     A contract of a library that is compiled against MSTest.TestFramework 4.5.1, the version of the test
+///     project: the tests that every normalizer passes, for the test class of each normalizer to inherit.
 /// </summary>
 public abstract class NormalizerContract
 {
-    public static int Runs { get; private set; }
+    protected static int Runs { get; private set; }
 
     protected abstract string Normalize(string text);
 
@@ -25,7 +25,7 @@ public abstract class NormalizerContract
     {
         Runs++;
 
-        string normalized = Normalize(text);
+        var normalized = Normalize(text);
 
         Assert.AreEqual(normalized, Normalize(normalized));
     }

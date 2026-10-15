@@ -36,15 +36,18 @@ internal sealed class OutcomeLogMerger : IArtifactPostProcessor
         foreach (var input in inputs)
         {
             var json = await File.ReadAllTextAsync(input.Path, cancellationToken);
-            var entries = JsonSerializer.Deserialize<OutcomeLog.Entry[]>(json)
+            var entries = JsonSerializer.Deserialize<OutcomeLog.Entry?[]>(json)
                 ?? throw new JsonException("An outcome log must contain a JSON array.");
-            if (entries.Any(static entry => entry is null
-                || string.IsNullOrEmpty(entry.Uid) || string.IsNullOrEmpty(entry.Name) || string.IsNullOrEmpty(entry.State)))
+            foreach (var entry in entries)
             {
-                throw new JsonException("Each outcome must have an identity, a name and a state.");
-            }
+                if (entry is null || string.IsNullOrEmpty(entry.Uid)
+                    || string.IsNullOrEmpty(entry.Name) || string.IsNullOrEmpty(entry.State))
+                {
+                    throw new JsonException("Each outcome must have an identity, a name and a state.");
+                }
 
-            outcomes.AddRange(entries);
+                outcomes.Add(entry);
+            }
         }
 
         Directory.CreateDirectory(outputDirectory);

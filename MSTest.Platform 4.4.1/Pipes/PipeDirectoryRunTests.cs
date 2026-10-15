@@ -4,12 +4,12 @@ using MSTest.Platform.Terminal;
 namespace MSTest.Platform.Pipes;
 
 /// <summary>
-/// <c>TESTINGPLATFORM_PIPE_DIRECTORY</c> names the directory in which the platform creates the socket files
-/// of its named pipes on Unix, which are in the temporary directory otherwise. The platform creates the
-/// directory when it is missing and ends the application when it cannot write to it or when the path of a
-/// socket in it is longer than 103 bytes. The runs below use pipes because <c>--report-trx</c> starts the
-/// test host as a process of its own, which its controller talks to through pipes. The variable has no
-/// effect on Windows, where a pipe is no file.
+///     <c>TESTINGPLATFORM_PIPE_DIRECTORY</c> names the directory in which the platform creates the socket files
+///     of its named pipes on Unix, which are in the temporary directory otherwise. The platform creates the
+///     directory when it is missing and ends the application when it cannot write to it or when the path of a
+///     socket in it is longer than 103 bytes. The runs below use pipes because <c>--report-trx</c> starts the
+///     test host as a process of its own, which its controller talks to through pipes. The variable has no
+///     effect on Windows, where a pipe is no file.
 /// </summary>
 [TestClass]
 [OSCondition(ConditionMode.Exclude, OperatingSystems.Windows)]
@@ -25,11 +25,15 @@ public sealed class PipeDirectoryRunTests(TestContext testContext)
     {
         var pipes = Path.Combine("/tmp", Path.GetRandomFileName());
         var results = Directory.CreateTempSubdirectory();
-        var start = new ProcessStartInfo(Environment.ProcessPath!, [.. StockCountsWithReport, "--results-directory", results.FullName])
+        var start = new ProcessStartInfo(Environment.ProcessPath!,
+            [.. StockCountsWithReport, "--results-directory", results.FullName])
         {
             RedirectStandardOutput = true,
+            Environment =
+            {
+                [Variable] = pipes
+            }
         };
-        start.Environment[Variable] = pipes;
         var sockets = new HashSet<string>();
 
         using var application = Process.Start(start)!;
@@ -37,10 +41,7 @@ public sealed class PipeDirectoryRunTests(TestContext testContext)
 
         while (!application.HasExited)
         {
-            if (Directory.Exists(pipes))
-            {
-                sockets.UnionWith(Directory.EnumerateFiles(pipes));
-            }
+            if (Directory.Exists(pipes)) sockets.UnionWith(Directory.EnumerateFiles(pipes));
 
             await Task.Delay(TimeSpan.FromMilliseconds(10), testContext.CancellationToken);
         }
@@ -51,7 +52,7 @@ public sealed class PipeDirectoryRunTests(TestContext testContext)
         Assert.IsEmpty(Directory.EnumerateFiles(pipes));
 
         Directory.Delete(pipes);
-        results.Delete(recursive: true);
+        results.Delete(true);
     }
 
     [TestMethod]
@@ -76,12 +77,17 @@ public sealed class PipeDirectoryRunTests(TestContext testContext)
 
         using var run = await RunAsync(deep);
 
-        Assert.MatchesRegex(@"The named pipe path '.+' is \d+ bytes long, which exceeds the maximum of 103 bytes allowed for a Unix domain socket\.", run.Error);
+        Assert.MatchesRegex(
+            @"The named pipe path '.+' is \d+ bytes long, which exceeds the maximum of 103 bytes allowed for a Unix domain socket\.",
+            run.Error);
         Assert.AreNotEqual(0, run.ExitCode);
 
-        Directory.Delete(Path.GetDirectoryName(deep)!, recursive: true);
+        Directory.Delete(Path.GetDirectoryName(deep)!, true);
     }
 
-    private Task<TestApplicationRun> RunAsync(string pipes) =>
-        TestApplicationRun.StartAsync(new Dictionary<string, string> { [Variable] = pipes }, testContext.CancellationToken, StockCountsWithReport);
+    private Task<TestApplicationRun> RunAsync(string pipes)
+    {
+        return TestApplicationRun.StartAsync(new Dictionary<string, string> { [Variable] = pipes },
+            testContext.CancellationToken, StockCountsWithReport);
+    }
 }

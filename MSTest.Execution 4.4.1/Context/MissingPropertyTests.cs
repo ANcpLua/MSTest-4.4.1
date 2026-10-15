@@ -1,11 +1,11 @@
 namespace MSTest.Execution.Context;
 
 /// <summary>
-/// A class that derives from <see cref="TestContext"/> supplies its own <see cref="TestContext.Properties"/>
-/// dictionary. A directory property without an entry in that dictionary is <see langword="null"/>, although the
-/// indexer of the dictionary throws for the same key. <see cref="TestContext.TestName"/> and
-/// <see cref="TestContext.FullyQualifiedTestClassName"/> are not nullable and throw an
-/// <see cref="InvalidOperationException"/> that names the property.
+///     A class that derives from <see cref="TestContext" /> supplies its own <see cref="TestContext.Properties" />
+///     dictionary. A directory property without an entry in that dictionary is <see langword="null" />, although the
+///     indexer of the dictionary throws for the same key. <see cref="TestContext.TestName" /> and
+///     <see cref="TestContext.FullyQualifiedTestClassName" /> are not nullable and throw an
+///     <see cref="InvalidOperationException" /> that names the property.
 /// </summary>
 [TestClass]
 public sealed class MissingPropertyTests
@@ -24,14 +24,16 @@ public sealed class MissingPropertyTests
 
     [TestMethod]
     public void The_dictionary_itself_throws_for_the_key_of_the_directory()
-        => Assert.ThrowsExactly<KeyNotFoundException>(() => _empty.Properties[nameof(TestContext.TestRunDirectory)]);
+    {
+        Assert.ThrowsExactly<KeyNotFoundException>(() => _empty.Properties[nameof(TestContext.TestRunDirectory)]);
+    }
 
     [TestMethod]
     public void A_directory_with_an_entry_is_that_entry()
     {
         DictionaryTestContext context = new(new Dictionary<string, object?>
         {
-            [nameof(TestContext.TestRunDirectory)] = "/runs/42",
+            [nameof(TestContext.TestRunDirectory)] = "/runs/42"
         });
 
         Assert.AreEqual("/runs/42", context.TestRunDirectory);

@@ -3,13 +3,16 @@ using MSTest.Showcase;
 namespace MSTest.Assertions.Differences;
 
 /// <summary>
-/// When the strings differ in whitespace that the rendered string cannot show, such as a space, a no-break space or a
-/// thin space, the failure of <c>Assert.AreEqual</c> names the difference on both sides between <c>[[</c> and
-/// <c>]]</c>, a space as <c>&lt;space&gt;</c>, other whitespace as its escape sequence. Long strings show it in the previews
-/// <c>expected near:</c> and <c>actual near:</c>, short ones in the line <c>difference:</c>. A tab, a line feed or a
-/// carriage return against one another keeps the caret line, because the rendered strings already show
-/// <c>\t</c>, <c>\n</c> and <c>\r</c>.
+///     When the strings differ in whitespace that the rendered string cannot show, such as a space, a no-break space or a
+///     thin space, the failure of <c>Assert.AreEqual</c> names the difference on both sides between <c>[[</c> and
+///     <c>]]</c>, a space as <c>&lt;space&gt;</c>, other whitespace as its escape sequence. Long strings show it in the
+///     previews
+///     <c>expected near:</c> and <c>actual near:</c>, short ones in the line <c>difference:</c>. A tab, a line feed or a
+///     carriage return against one another keeps the caret line, because the rendered strings already show
+///     <c>\t</c>, <c>\n</c> and <c>\r</c>.
 /// </summary>
+// Deliberate comparison failures exercise diagnostic and structured-value reporting; Assert.Fail cannot replace them.
+#pragma warning disable MSTEST0025
 [TestClass]
 public sealed class WhitespaceDifferenceTests
 {
@@ -23,10 +26,13 @@ public sealed class WhitespaceDifferenceTests
     [DataRow("\u2009", @"[[\u2009]]", DisplayName = "thin space")]
     public void Preview_names_the_whitespace_on_both_sides(string whitespace, string marker)
     {
-        string expected = $"{Statement}{whitespace}created";
-        string actual = $"{Statement} created";
+        var expected = $"{Statement}{whitespace}created";
+        const string actual = $"{Statement} created";
 
-        AssertFailedException failure = Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreEqual(expected, actual));
+        // Expected varies with the data row; actual is the canonical text whose whitespace is compared.
+#pragma warning disable MSTEST0017
+        var failure = Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreEqual(expected, actual));
+#pragma warning restore MSTEST0017
 
         Assert.Contains("expected near: \"...", failure.Message);
         Assert.Contains($"ORDER BY{marker}created\"", failure.Message);
@@ -38,10 +44,10 @@ public sealed class WhitespaceDifferenceTests
     [TestMethod]
     public void Preview_names_a_space_too_many()
     {
-        string expected = $"{Statement} created";
-        string actual = $"{Statement}  created";
+        const string expected = $"{Statement} created";
+        const string actual = $"{Statement}  created";
 
-        AssertFailedException failure = Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreEqual(expected, actual));
+        var failure = Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreEqual(expected, actual));
 
         Assert.Contains("ORDER BY [[c]]reated\"", failure.Message);
         Assert.Contains("ORDER BY [[<space>]]created\"", failure.Message);
@@ -50,10 +56,10 @@ public sealed class WhitespaceDifferenceTests
     [TestMethod]
     public void Short_strings_name_the_whitespace_in_the_difference_line()
     {
-        string expected = "total:\t10 EUR";
-        string actual = "total: 10 EUR";
+        const string expected = "total:\t10 EUR";
+        const string actual = "total: 10 EUR";
 
-        AssertFailedException failure = Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreEqual(expected, actual));
+        var failure = Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreEqual(expected, actual));
 
         Assert.Contains(@"difference: expected [[\t]]; actual [[<space>]]", failure.Message);
     }
@@ -61,10 +67,10 @@ public sealed class WhitespaceDifferenceTests
     [TestMethod]
     public void Tab_against_line_feed_keeps_the_caret_line()
     {
-        string expected = "total:\t10 EUR";
-        string actual = "total:\n10 EUR";
+        const string expected = "total:\t10 EUR";
+        const string actual = "total:\n10 EUR";
 
-        AssertFailedException failure = Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreEqual(expected, actual));
+        var failure = Assert.ThrowsExactly<AssertFailedException>(() => Assert.AreEqual(expected, actual));
 
         Assert.Contains("difference: -------^", failure.Message);
         Assert.DoesNotContain("[[", failure.Message);
@@ -72,8 +78,9 @@ public sealed class WhitespaceDifferenceTests
 }
 
 /// <summary>
-/// Fails on purpose, so that the run prints the preview: <c>expected near:</c> ends with <c>ORDER BY[[\t]]created"</c>,
-/// <c>actual near:</c> with <c>ORDER BY[[&lt;space&gt;]]created"</c>.
+///     Fails on purpose, so that the run prints the preview: <c>expected near:</c> ends with <c>ORDER BY[[\t]]created"</c>
+///     ,
+///     <c>actual near:</c> with <c>ORDER BY[[&lt;space&gt;]]created"</c>.
 /// </summary>
 [TestClass]
 public sealed class WhitespaceDifferenceShowcase
@@ -82,9 +89,10 @@ public sealed class WhitespaceDifferenceShowcase
     [Explicit]
     public void Tab_instead_of_a_space()
     {
-        string expected = $"{WhitespaceDifferenceTests.Statement}\tcreated";
-        string actual = $"{WhitespaceDifferenceTests.Statement} created";
+        const string expected = $"{WhitespaceDifferenceTests.Statement}\tcreated";
+        const string actual = $"{WhitespaceDifferenceTests.Statement} created";
 
         Assert.AreEqual(expected, actual);
     }
 }
+#pragma warning restore MSTEST0025

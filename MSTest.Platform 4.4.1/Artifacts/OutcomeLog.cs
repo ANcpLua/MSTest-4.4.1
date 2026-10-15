@@ -5,7 +5,6 @@ using Microsoft.Testing.Platform.Extensions;
 using Microsoft.Testing.Platform.Extensions.Messages;
 using Microsoft.Testing.Platform.Extensions.TestHost;
 using Microsoft.Testing.Platform.Services;
-using Microsoft.Testing.Platform.TestHost;
 
 namespace MSTest.Platform.Artifacts;
 
@@ -42,7 +41,7 @@ internal sealed class OutcomeLog(IServiceProvider services) : IDataConsumer, ITe
             ErrorTestNodeStateProperty => "error",
             TimeoutTestNodeStateProperty => "timeout",
             SkippedTestNodeStateProperty => "skipped",
-            var unsupported => throw new NotSupportedException($"Unsupported test node state: {unsupported.GetType().FullName}"),
+            var unsupported => throw new NotSupportedException($"Unsupported test node state: {unsupported.GetType().FullName}")
         };
 
         if (state is null

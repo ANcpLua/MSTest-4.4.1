@@ -3,9 +3,9 @@ using MSTest.SourceGenerated;
 namespace MSTest.SourceGeneration.Diagnostics;
 
 /// <summary>
-/// AOTSG0005 reports a parameter with <c>out</c>, <c>ref</c> or <c>in</c> on a method or constructor of a
-/// test class that the generated registry can access, and the generator leaves the member out. A method
-/// that returns its result instead has an entry. A private method is neither reported nor entered.
+///     AOTSG0005 reports a parameter with <c>out</c>, <c>ref</c> or <c>in</c> on a method or constructor of a
+///     test class that the generated registry can access, and the generator leaves the member out. A method
+///     that returns its result instead has an entry. A private method is neither reported nor entered.
 /// </summary>
 [TestClass]
 public sealed class ByRefParameterTests
@@ -55,15 +55,30 @@ public sealed class ByRefParameterTests
     }
 
     // AOTSG0005
-    public bool TryParse(string text, out int number) => int.TryParse(text, out number);
+    public static bool TryParse(string text, out int number)
+    {
+        return int.TryParse(text, out number);
+    }
 
     // AOTSG0005
-    public void Increment(ref int number) => number++;
+    public static void Increment(ref int number)
+    {
+        number++;
+    }
 
     // AOTSG0005
-    public int Negate(in int number) => -number;
+    public static int Negate(in int number)
+    {
+        return -number;
+    }
 
-    public int? Parse(string text) => int.TryParse(text, out var number) ? number : null;
+    public static int? Parse(string text)
+    {
+        return int.TryParse(text, out var number) ? number : null;
+    }
 
-    private static bool TryParsePrivately(string text, out int number) => int.TryParse(text, out number);
+    private static bool TryParsePrivately(string text, out int number)
+    {
+        return int.TryParse(text, out number);
+    }
 }

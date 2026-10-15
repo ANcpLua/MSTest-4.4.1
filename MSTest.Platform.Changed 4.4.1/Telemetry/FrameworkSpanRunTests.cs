@@ -1,14 +1,14 @@
 namespace MSTest.Platform.Changed.Telemetry;
 
 /// <summary>
-/// The spans that MSTest adds to those of the platform. A test method has one canonical span
-/// named after the test, with its class, namespace and status. A call of
-/// a fixture has a span named after the attribute of the fixture, such as <c>MSTest.ClassInitialize</c>,
-/// with the kind of the fixture and the full name of its class. Class fixtures and tests are children of
-/// <c>TestFramework</c>; test fixtures are children of their test. The framework span names MSTest and its version.
+///     The spans that MSTest adds to those of the platform. A test method has one canonical span
+///     named after the test, with its class, namespace and status. A call of
+///     a fixture has a span named after the attribute of the fixture, such as <c>MSTest.ClassInitialize</c>,
+///     with the kind of the fixture and the full name of its class. Class fixtures and tests are children of
+///     <c>TestFramework</c>; test fixtures are children of their test. The framework span names MSTest and its version.
 /// </summary>
 [TestClass]
-public sealed class MSTestSpanRunTests
+public sealed class FrameworkSpanRunTests
 {
     private static TestApplicationRun _run = null!;
     private static IReadOnlyList<Span> _spans = null!;
@@ -16,19 +16,24 @@ public sealed class MSTestSpanRunTests
     [ClassInitialize]
     public static async Task RunTheCheckout(TestContext testContext)
     {
-        _run = await TestApplicationRun.StartAsync(testContext.CancellationToken, "--filter", $"ClassName={typeof(CheckoutTests).FullName}");
+        _run = await TestApplicationRun.StartAsync(testContext.CancellationToken, "--filter",
+            $"ClassName={typeof(CheckoutTests).FullName}");
         _spans = _run.ReadSpans();
     }
 
     [ClassCleanup]
-    public static void DeleteTheResults() => _run.Dispose();
+    public static void DeleteTheResults()
+    {
+        _run.Dispose();
+    }
 
     [TestMethod]
     [DataRow(nameof(CheckoutTests.Totals_the_items))]
     [DataRow(nameof(CheckoutTests.Prints_the_receipt))]
     public void Test_method_has_a_span_with_its_name_its_class_and_its_status(string test)
     {
-        var span = Assert.ContainsSingle(_spans.Where(span => span.Name == test && span.Attributes.ContainsKey("test.case.id")));
+        var span = Assert.ContainsSingle(_spans.Where(span =>
+            span.Name == test && span.Attributes.ContainsKey("test.case.id")));
 
         Assert.AreEqual(test, span.Attributes["test.case.name"]);
         Assert.AreEqual(nameof(CheckoutTests), span.Attributes["test.suite.name"]);
@@ -45,7 +50,8 @@ public sealed class MSTestSpanRunTests
 
         Assert.HasCount(calls, spans);
         Assert.AreSequenceEqual([kind], spans.Select(static span => span.Attributes["test.fixture.kind"]).Distinct());
-        Assert.AreSequenceEqual([typeof(CheckoutTests).FullName], spans.Select(static span => span.Attributes["test.suite.name"]).Distinct());
+        Assert.AreSequenceEqual([typeof(CheckoutTests).FullName],
+            spans.Select(static span => span.Attributes["test.suite.name"]).Distinct());
     }
 
     [TestMethod]
@@ -57,7 +63,8 @@ public sealed class MSTestSpanRunTests
         foreach (var test in tests)
         {
             Assert.AreEqual((framework.TraceId, framework.SpanId), (test.TraceId, test.ParentSpanId));
-            var fixture = Assert.ContainsSingle(_spans.Where(span => span.Name == "MSTest.TestInitialize" && span.ParentSpanId == test.SpanId));
+            var fixture = Assert.ContainsSingle(_spans.Where(span =>
+                span.Name == "MSTest.TestInitialize" && span.ParentSpanId == test.SpanId));
             Assert.AreEqual(test.TraceId, fixture.TraceId);
         }
 
@@ -69,5 +76,8 @@ public sealed class MSTestSpanRunTests
     }
 
     [TestMethod]
-    public void Run_passes() => Assert.AreEqual(0, _run.ExitCode);
+    public void Run_passes()
+    {
+        Assert.AreEqual(0, _run.ExitCode);
+    }
 }

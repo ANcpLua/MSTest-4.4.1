@@ -5,17 +5,17 @@ using System.Xml.Linq;
 namespace MSTest.Platform.Changed.Retries;
 
 /// <summary>
-/// What the reports keep of a run of <see cref="RestockTests"/> that <c>--retry-failed-tests</c> repeats in
-/// a second test host. The HTML report of the run joins the attempts: the test that passed after a retry has
-/// the outcome of its last attempt, is marked as flaky and keeps its failed attempt, and the page shows the
-/// retry history. The job summary of the GitHub Actions report counts the test as flaky and lists it under
-/// the flaky tests. The run keeps the summary as a fragment in its results directory as well, the artifact
-/// that the post-processing of several attempts or test assemblies reads. The TRX report of the run is the
-/// report of the last attempt and holds the repeated test only. The options need
-/// <c>EnableMicrosoftTestingExtensionsRetry</c>,
-/// <c>EnableMicrosoftTestingExtensionsHtmlReport</c> and
-/// <c>EnableMicrosoftTestingExtensionsGitHubActionsReport</c> in the project file. This example sets the
-/// variables <c>GITHUB_ACTIONS</c> and <c>GITHUB_STEP_SUMMARY</c> itself, as a runner of GitHub Actions does.
+///     What the reports keep of a run of <see cref="RestockTests" /> that <c>--retry-failed-tests</c> repeats in
+///     a second test host. The HTML report of the run joins the attempts: the test that passed after a retry has
+///     the outcome of its last attempt, is marked as flaky and keeps its failed attempt, and the page shows the
+///     retry history. The job summary of the GitHub Actions report counts the test as flaky and lists it under
+///     the flaky tests. The run keeps the summary as a fragment in its results directory as well, the artifact
+///     that the post-processing of several attempts or test assemblies reads. The TRX report of the run is the
+///     report of the last attempt and holds the repeated test only. The options need
+///     <c>EnableMicrosoftTestingExtensionsRetry</c>,
+///     <c>EnableMicrosoftTestingExtensionsHtmlReport</c> and
+///     <c>EnableMicrosoftTestingExtensionsGitHubActionsReport</c> in the project file. This example sets the
+///     variables <c>GITHUB_ACTIONS</c> and <c>GITHUB_STEP_SUMMARY</c> itself, as a runner of GitHub Actions does.
 /// </summary>
 [TestClass]
 public sealed partial class ProcessRetryRunTests
@@ -42,7 +42,7 @@ public sealed partial class ProcessRetryRunTests
             {
                 [RestockTests.Shelf] = shelf.FullName,
                 ["GITHUB_ACTIONS"] = "true",
-                ["GITHUB_STEP_SUMMARY"] = summary,
+                ["GITHUB_STEP_SUMMARY"] = summary
             },
             testContext.CancellationToken,
             "--filter", $"ClassName={typeof(RestockTests).FullName}",
@@ -55,7 +55,10 @@ public sealed partial class ProcessRetryRunTests
     }
 
     [ClassCleanup]
-    public static void DeleteTheResults() => _run.Dispose();
+    public static void DeleteTheResults()
+    {
+        _run.Dispose();
+    }
 
     [TestMethod]
     public void Run_passes_after_the_second_attempt()
@@ -118,7 +121,8 @@ public sealed partial class ProcessRetryRunTests
     [TestMethod]
     public void Job_summary_is_kept_as_a_fragment_in_the_results_directory()
     {
-        var fragment = Assert.ContainsSingle(Directory.GetFiles(_run.PathOf(".ci-summary-fragments"), "github-actions-*.json"));
+        var fragment =
+            Assert.ContainsSingle(Directory.GetFiles(_run.PathOf(".ci-summary-fragments"), "github-actions-*.json"));
 
         Assert.Contains(Flaky, File.ReadAllText(fragment));
     }
@@ -134,10 +138,16 @@ public sealed partial class ProcessRetryRunTests
         Assert.AreSequenceEqual([$"{Flaky}: Passed"], rows);
     }
 
-    private static JsonNode TestOfThePage(string test) =>
-        Assert.ContainsSingle(DataOfThePage()["tests"]!.AsArray().Where(row => (string?)row!["displayName"] == test))!;
+    private static JsonNode TestOfThePage(string test)
+    {
+        return Assert.ContainsSingle(DataOfThePage()["tests"]!.AsArray()
+            .Where(row => (string?)row!["displayName"] == test))!;
+    }
 
-    private static JsonNode DataOfThePage() => JsonNode.Parse(DataElement().Match(_page).Groups["data"].Value)!;
+    private static JsonNode DataOfThePage()
+    {
+        return JsonNode.Parse(DataElement().Match(_page).Groups["data"].Value)!;
+    }
 
     [GeneratedRegex("""<script id="mtp-data" type="application/json">(?<data>.*?)</script>""", RegexOptions.Singleline)]
     private static partial Regex DataElement();
