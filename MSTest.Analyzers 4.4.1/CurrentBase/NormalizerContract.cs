@@ -1,7 +1,7 @@
 namespace MSTest.Analyzers.CurrentBase;
 
 /// <summary>
-/// A contract of a library that is compiled against MSTest.TestFramework 4.4.1, the version of the test
+/// A contract of a library that is compiled against MSTest.TestFramework 4.5.1, the version of the test
 /// project: the tests that every normalizer passes, for the test class of each normalizer to inherit.
 /// </summary>
 public abstract class NormalizerContract

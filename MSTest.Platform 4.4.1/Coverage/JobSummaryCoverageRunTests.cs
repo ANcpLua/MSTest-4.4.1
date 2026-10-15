@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using MSTest.Platform.Terminal;
 
 namespace MSTest.Platform.Coverage;
@@ -10,7 +11,7 @@ namespace MSTest.Platform.Coverage;
 /// each check. The GitHub Actions summary goes to the file that <c>GITHUB_STEP_SUMMARY</c> names, with
 /// <c>--report-gh</c> and <c>GITHUB_ACTIONS</c> set to <c>true</c>. The Azure DevOps summary goes to the
 /// results directory with <c>--report-azdo --report-azdo-summary</c>, and the report prints
-/// <c>##vso[task.uploadsummary]</c> with its path.
+/// <c>##vso[task.addattachment type=Distributedtask.Core.Summary;name=…;]</c> with its path.
 /// </summary>
 [TestClass]
 public sealed class JobSummaryCoverageRunTests(TestContext testContext)
@@ -61,7 +62,10 @@ public sealed class JobSummaryCoverageRunTests(TestContext testContext)
             "--filter", StockCounts, "--report-azdo", "--report-azdo-summary");
 
         var markdown = File.ReadAllText(run.PathOf("azdo-summary-MSTest.Platform_4.4.1-net10.0-arm64.md"));
-        Assert.Contains($"##vso[task.uploadsummary]{run.PathOf("azdo-summary-MSTest.Platform_4.4.1-net10.0-arm64.md")}", run.Output);
+        Assert.MatchesRegex(
+            @"##vso\[task\.addattachment type=Distributedtask\.Core\.Summary;name=Test results - MSTest\.Platform 4\.4\.1 \(net10\.0, arm64, attempt 1, session [0-9a-f-]{36}\);\]"
+            + Regex.Escape(run.PathOf("azdo-summary-MSTest.Platform_4.4.1-net10.0-arm64.md")),
+            run.Output);
         Assert.Contains($"## Code coverage\n\n{Metrics.ReplaceLineEndings("\n")}", markdown);
         Assert.Contains($"### Coverage thresholds\n\n{Thresholds.ReplaceLineEndings("\n")}", markdown);
     }

@@ -40,7 +40,7 @@ public sealed class ProtocolVersionRunTests(TestContext testContext)
         var answer = await server.RequestAsync(Initialize.Replace("VERSIONS", versions), testContext.CancellationToken);
 
         Assert.AreEqual("1.0.0", (string?)answer["result"]!["protocolVersion"]);
-        Assert.AreEqual("2.4.1", (string?)answer["result"]!["serverInfo"]!["version"]);
+        Assert.AreEqual("2.5.1", (string?)answer["result"]!["serverInfo"]!["version"]);
     }
 
     [TestMethod]

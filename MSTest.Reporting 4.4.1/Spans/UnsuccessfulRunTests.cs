@@ -10,13 +10,12 @@ namespace MSTest.Reporting.Spans;
 /// the outcome <c>skipped</c> and the status <c>Unset</c>. The span of a test initialize method records a
 /// timeout in the same way as a failed test. The span of a test initialize, class initialize or class cleanup
 /// method does not record an exception that the method throws. For a test initialize method that failure is
-/// on the span of the test; a class initialize method that throws leaves the tests of its class without a span,
-/// and a class cleanup method that throws leaves the span of the passed test as it is.
+/// on the canonical span of the test. A class initialize failure produces a failed test result span even
+/// though the body does not run; a class cleanup failure changes the final result span to failed.
 /// </summary>
 [TestClass]
 public sealed class UnsuccessfulRunTests
 {
-    private const string TestMethod = "MSTest.TestMethod";
     private const int AtLeastOneTestFailed = 2;
 
     private static TestApplicationRun _run = null!;
@@ -83,32 +82,36 @@ public sealed class UnsuccessfulRunTests
     }
 
     [TestMethod]
-    public void Class_initialize_that_throws_has_a_span_without_the_exception_and_its_test_has_no_span()
+    public void Class_initialize_that_throws_leaves_the_exception_on_the_failed_test_span()
     {
         var fixture = FixtureSpanOf("MSTest.ClassInitialize", typeof(ThrowingClassInitializeTests));
 
         Assert.AreEqual(ActivityStatusCode.Unset, fixture.Status);
         Assert.IsEmpty(fixture.Events);
-        Assert.IsEmpty(_spans.Where(static span =>
-            span.Name == TestMethod && span.Attributes["test.suite.name"] == typeof(ThrowingClassInitializeTests).FullName));
+        var test = SpanOf(nameof(ThrowingClassInitializeTests.Is_not_reached_after_the_class_fixture));
+        Assert.AreEqual("fail", test.Attributes["test.case.result.status"]);
+        Assert.AreEqual(ActivityStatusCode.Error, test.Status);
+        Assert.Contains("The shelf is locked.", Assert.ContainsSingle(test.Events).Attributes["exception.message"]!);
     }
 
     [TestMethod]
-    public void Class_cleanup_that_throws_has_a_span_without_the_exception_after_a_passed_test()
+    public void Class_cleanup_that_throws_changes_the_final_test_span_to_failed()
     {
         var fixture = FixtureSpanOf("MSTest.ClassCleanup", typeof(ThrowingClassCleanupTests));
         var test = SpanOf(nameof(ThrowingClassCleanupTests.Holds_an_item_before_the_class_fixture_throws));
 
         Assert.AreEqual(ActivityStatusCode.Unset, fixture.Status);
         Assert.IsEmpty(fixture.Events);
-        Assert.AreEqual("pass", test.Attributes["test.case.result.status"]);
+        Assert.AreEqual("fail", test.Attributes["test.case.result.status"]);
+        Assert.AreEqual(ActivityStatusCode.Error, test.Status);
+        Assert.Contains("The shelf is stuck.", Assert.ContainsSingle(test.Events).Attributes["exception.message"]!);
     }
 
     [TestMethod]
     public void Run_ends_with_the_exit_code_of_a_failed_test() => Assert.AreEqual(AtLeastOneTestFailed, _run.ExitCode);
 
     private static Span SpanOf(string test) =>
-        Assert.ContainsSingle(_spans.Where(span => span.Name == TestMethod && span.Attributes["test.case.name"] == test));
+        Assert.ContainsSingle(_spans.Where(span => span.Name == test && span.Attributes.TryGetValue("test.case.name", out var name) && name == test));
 
     private static Span FixtureSpanOf(string name, Type testClass) =>
         Assert.ContainsSingle(_spans.Where(span => span.Name == name && span.Attributes["test.suite.name"] == testClass.FullName));

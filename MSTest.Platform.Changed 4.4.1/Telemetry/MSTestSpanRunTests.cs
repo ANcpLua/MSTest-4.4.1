@@ -1,17 +1,15 @@
 namespace MSTest.Platform.Changed.Telemetry;
 
 /// <summary>
-/// The spans that MSTest adds to those of the platform. A test method has the span
-/// <c>MSTest.TestMethod</c> with the name of the test, the full name of its class and its status. A call of
+/// The spans that MSTest adds to those of the platform. A test method has one canonical span
+/// named after the test, with its class, namespace and status. A call of
 /// a fixture has a span named after the attribute of the fixture, such as <c>MSTest.ClassInitialize</c>,
-/// with the kind of the fixture and the full name of its class. All of them are children of the
-/// <c>TestFramework</c> span of the platform, which names MSTest and its version.
+/// with the kind of the fixture and the full name of its class. Class fixtures and tests are children of
+/// <c>TestFramework</c>; test fixtures are children of their test. The framework span names MSTest and its version.
 /// </summary>
 [TestClass]
 public sealed class MSTestSpanRunTests
 {
-    private const string TestMethod = "MSTest.TestMethod";
-
     private static TestApplicationRun _run = null!;
     private static IReadOnlyList<Span> _spans = null!;
 
@@ -30,9 +28,11 @@ public sealed class MSTestSpanRunTests
     [DataRow(nameof(CheckoutTests.Prints_the_receipt))]
     public void Test_method_has_a_span_with_its_name_its_class_and_its_status(string test)
     {
-        var span = Assert.ContainsSingle(_spans.Where(span => span.Name == TestMethod && span.Attributes["test.case.name"] == test));
+        var span = Assert.ContainsSingle(_spans.Where(span => span.Name == test && span.Attributes.ContainsKey("test.case.id")));
 
-        Assert.AreEqual(typeof(CheckoutTests).FullName, span.Attributes["test.suite.name"]);
+        Assert.AreEqual(test, span.Attributes["test.case.name"]);
+        Assert.AreEqual(nameof(CheckoutTests), span.Attributes["test.suite.name"]);
+        Assert.AreEqual(typeof(CheckoutTests).Namespace, span.Attributes["test.namespace"]);
         Assert.AreEqual("pass", span.Attributes["test.case.result.status"]);
     }
 
@@ -49,17 +49,23 @@ public sealed class MSTestSpanRunTests
     }
 
     [TestMethod]
-    public void Spans_of_MSTest_are_children_of_the_span_of_the_test_framework()
+    public void Test_spans_belong_to_the_framework_and_test_fixtures_belong_to_their_test()
     {
         var framework = Assert.ContainsSingle(_spans.Where(static span => span.Name == "TestFramework"));
-        var parents = _spans
-            .Where(static span => span.Name.StartsWith("MSTest.", StringComparison.Ordinal))
-            .Select(static span => (span.TraceId, span.ParentSpanId))
-            .Distinct();
+        var tests = _spans.Where(static span => span.Attributes.ContainsKey("test.case.id")).ToArray();
+        Assert.HasCount(2, tests);
+        foreach (var test in tests)
+        {
+            Assert.AreEqual((framework.TraceId, framework.SpanId), (test.TraceId, test.ParentSpanId));
+            var fixture = Assert.ContainsSingle(_spans.Where(span => span.Name == "MSTest.TestInitialize" && span.ParentSpanId == test.SpanId));
+            Assert.AreEqual(test.TraceId, fixture.TraceId);
+        }
 
-        Assert.AreEqual((framework.TraceId, framework.SpanId), Assert.ContainsSingle(parents));
+        var classFixture = Assert.ContainsSingle(_spans.Where(static span => span.Name == "MSTest.ClassInitialize"));
+        Assert.AreEqual((framework.TraceId, framework.SpanId), (classFixture.TraceId, classFixture.ParentSpanId));
+        Assert.IsEmpty(_spans.Where(static span => span.Name == "MSTest.TestMethod"));
         Assert.AreEqual("MSTest", framework.Attributes["test.framework.name"]);
-        Assert.AreEqual("4.4.1", framework.Attributes["test.framework.version"]);
+        Assert.AreEqual("4.5.1", framework.Attributes["test.framework.version"]);
     }
 
     [TestMethod]

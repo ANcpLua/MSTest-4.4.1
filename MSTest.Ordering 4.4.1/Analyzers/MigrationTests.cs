@@ -9,7 +9,6 @@ namespace MSTest.Ordering.Analyzers;
 public sealed class MigrationTests : MigrationContract;
 
 /// <summary>An abstract test class: its test runs under <see cref="MigrationTests"/>.</summary>
-[TestClass]
 public abstract class MigrationContract : MigrationBase
 {
     [TestMethod]

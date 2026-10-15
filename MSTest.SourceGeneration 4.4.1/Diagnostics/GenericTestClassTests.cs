@@ -3,8 +3,8 @@ using MSTest.SourceGenerated;
 namespace MSTest.SourceGeneration.Diagnostics;
 
 /// <summary>
-/// AOTSG0002 reports a class with <c>[TestClass]</c> that is generic or nested in a generic class: the
-/// generator writes no entry for a type whose type parameters are open. The entry belongs to the closed
+/// AOTSG0002 reports a test class nested in a generic class: the generator writes no entry for a type
+/// whose type parameters are open. The entry belongs to the closed
 /// class that derives from the generic one, and the registry calls the tests that this class inherits. A
 /// generic base class goes without <c>[TestClass]</c>.
 /// </summary>
@@ -32,8 +32,6 @@ public sealed class GenericTestClassTests
         => Assert.DoesNotContain(typeof(ParsingTests<int>.ReportedNestedTests), Classes);
 }
 
-// AOTSG0002
-[TestClass]
 public abstract class ReportedParsingTests<T>
     where T : IParsable<T>
 {

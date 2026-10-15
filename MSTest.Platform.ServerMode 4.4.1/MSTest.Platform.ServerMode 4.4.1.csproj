@@ -8,7 +8,7 @@
 
     <ItemGroup>
         <Compile Include="..\Shared\ExplicitAttribute.cs" Link="Shared\ExplicitAttribute.cs"/>
-        <PackageReference Include="Microsoft.Testing.Platform.ServerMode.Client.Sources" Version="2.4.1" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.Testing.Platform.ServerMode.Client.Sources" Version="2.5.1" PrivateAssets="all"/>
     </ItemGroup>
 
 </Project>

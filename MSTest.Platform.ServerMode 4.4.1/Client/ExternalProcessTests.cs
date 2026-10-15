@@ -29,7 +29,7 @@ public sealed class ExternalProcessTests(TestContext testContext)
 
         Assert.IsTrue(capabilities.SupportsDiscovery);
         Assert.AreEqual("1.0.0", capabilities.ProtocolVersion);
-        Assert.AreEqual("2.4.1", capabilities.ServerVersion);
+        Assert.AreEqual("2.5.1", capabilities.ServerVersion);
         Assert.AreEqual(client.ProcessId, capabilities.ServerProcessId);
         Assert.AreNotEqual(Environment.ProcessId, client.ProcessId);
 

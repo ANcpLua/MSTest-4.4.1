@@ -5,9 +5,9 @@ namespace MSTest.Reporting.Spans;
 /// <summary>
 /// A test class with an assembly, a class and a test initialize and cleanup method. With the OpenTelemetry
 /// provider that <c>Program.cs</c> registers, MSTest records a span for each call of these six fixture methods
-/// and a span for each test it runs; an ignored test does not run and has no span. None of these spans becomes
-/// <see cref="Activity.Current"/>: a test runs with the <c>TestFramework</c> span of the platform as the current
-/// activity.
+/// and one canonical span for each test result, including ignored tests. The canonical test span becomes
+/// <see cref="Activity.Current"/> during the test and its test fixtures. Assembly and class fixtures run with
+/// the <c>TestFramework</c> span as the current activity.
 /// </summary>
 [TestClass]
 public sealed class LifecycleTests
@@ -57,5 +57,5 @@ public sealed class LifecycleTests
     public void Is_ignored() => Assert.IsTrue(_open);
 
     [TestMethod]
-    public void Runs_outside_its_own_span() => Assert.AreEqual("TestFramework", Activity.Current?.OperationName);
+    public void Runs_inside_its_own_span() => Assert.AreEqual(nameof(Runs_inside_its_own_span), Activity.Current?.OperationName);
 }

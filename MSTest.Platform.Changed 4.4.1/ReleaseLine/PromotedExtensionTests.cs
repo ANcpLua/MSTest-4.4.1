@@ -24,7 +24,7 @@ public sealed class PromotedExtensionTests
     [DataRow(typeof(GitHubActionsExtensions))]
     public void Extension_has_the_version_of_the_platform(Type registration)
     {
-        Assert.AreEqual("2.4.1", Platform);
+        Assert.AreEqual("2.5.1", Platform);
         Assert.AreEqual(Platform, ReleaseOf(registration));
     }
 

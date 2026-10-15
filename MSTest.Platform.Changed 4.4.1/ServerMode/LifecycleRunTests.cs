@@ -61,7 +61,7 @@ public sealed class LifecycleRunTests(TestContext testContext)
         var answer = await server.RequestAsync(Initialize, testContext.CancellationToken);
 
         Assert.AreEqual(1, (int)answer["id"]!);
-        Assert.AreEqual("2.4.1", (string?)answer["result"]!["serverInfo"]!["version"]);
+        Assert.AreEqual("2.5.1", (string?)answer["result"]!["serverInfo"]!["version"]);
         Assert.IsTrue((bool)answer["result"]!["capabilities"]!["testing"]!["supportsDiscovery"]!);
     }
 

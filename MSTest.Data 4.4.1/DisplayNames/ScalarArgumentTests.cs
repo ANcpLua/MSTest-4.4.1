@@ -3,7 +3,7 @@ namespace MSTest.Data.DisplayNames;
 /// <summary>
 /// A data row without a display name of its own is named after the test and its arguments: a string in
 /// double quotes, a <see cref="char"/> in single quotes, <see langword="null"/> as <c>null</c> and any other
-/// value as its <c>ToString</c> writes it. Text is copied as it is, without escaping.
+/// value as its <c>ToString</c> writes it. Quotes in string and character arguments are escaped.
 /// </summary>
 [TestClass]
 public sealed class ScalarArgumentTests(TestContext testContext)
@@ -18,8 +18,8 @@ public sealed class ScalarArgumentTests(TestContext testContext)
 
     [TestMethod]
     [DataRow("6\" nail", '\'')]
-    public void Copies_text_without_escaping(string item, char unit)
+    public void Escapes_quotes_in_text(string item, char unit)
         => Assert.AreEqual(
-            $"""{nameof(Copies_text_without_escaping)} ("6" nail",''')""",
+            $"""{nameof(Escapes_quotes_in_text)} ("6\" nail",'\'')""",
             testContext.TestDisplayName);
 }
