@@ -34,15 +34,24 @@ internal sealed class OutcomeLog(IServiceProvider services) : IDataConsumer, ITe
     public Task ConsumeAsync(IDataProducer dataProducer, IData value, CancellationToken cancellationToken)
     {
         var test = ((TestNodeUpdateMessage)value).TestNode;
-        var state = test.Properties.SingleOrDefault<TestNodeStateProperty>();
+        var state = test.Properties.SingleOrDefault<TestNodeStateProperty>() switch
+        {
+            null or DiscoveredTestNodeStateProperty or InProgressTestNodeStateProperty => null,
+            PassedTestNodeStateProperty => "passed",
+            FailedTestNodeStateProperty => "failed",
+            ErrorTestNodeStateProperty => "error",
+            TimeoutTestNodeStateProperty => "timeout",
+            SkippedTestNodeStateProperty => "skipped",
+            var unsupported => throw new NotSupportedException($"Unsupported test node state: {unsupported.GetType().FullName}"),
+        };
 
-        if (state is null or DiscoveredTestNodeStateProperty or InProgressTestNodeStateProperty
+        if (state is null
             || test.Properties.SingleOrDefault<RetryAttemptProperty>() is { IsSuperseded: true })
         {
             return Task.CompletedTask;
         }
 
-        _outcomes[test.Uid.Value] = new Entry(test.Uid.Value, test.DisplayName, state.ToString());
+        _outcomes[test.Uid.Value] = new Entry(test.Uid.Value, test.DisplayName, state);
         return Task.CompletedTask;
     }
 

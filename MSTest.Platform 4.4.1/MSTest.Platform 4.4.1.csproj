@@ -14,6 +14,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="..\Shared\ChildProcess.cs" Link="Shared\ChildProcess.cs"/>
         <Compile Include="..\Shared\ExplicitAttribute.cs" Link="Shared\ExplicitAttribute.cs"/>
     </ItemGroup>
 

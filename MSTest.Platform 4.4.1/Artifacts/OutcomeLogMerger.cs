@@ -49,12 +49,42 @@ internal sealed class OutcomeLogMerger : IArtifactPostProcessor
 
         Directory.CreateDirectory(outputDirectory);
         var path = Path.Combine(outputDirectory, OutcomeLog.FileName);
-        if (inputs.Any(input => string.Equals(Path.GetFullPath(input.Path), Path.GetFullPath(path), StringComparison.OrdinalIgnoreCase)))
+        var temporaryPath = Path.Combine(outputDirectory, Path.GetRandomFileName());
+        var temporaryCreated = false;
+        try
         {
-            throw new IOException("The merged outcome log must not overwrite an input artifact.");
+            await using (var stream = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None,
+                bufferSize: 4096, FileOptions.Asynchronous))
+            {
+                temporaryCreated = true;
+                await JsonSerializer.SerializeAsync(stream, outcomes, cancellationToken: cancellationToken);
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                File.Move(temporaryPath, path);
+            }
+            catch (IOException) when (File.Exists(path))
+            {
+                // A repeated merge can reuse its identical output. Never truncate an existing file:
+                // it could also be an input reached through a symbolic link or a hard link.
+                var existing = await File.ReadAllBytesAsync(path, cancellationToken);
+                var merged = await File.ReadAllBytesAsync(temporaryPath, cancellationToken);
+                if (!existing.AsSpan().SequenceEqual(merged))
+                {
+                    throw new IOException("The merged outcome log must not overwrite an existing artifact.");
+                }
+            }
+        }
+        finally
+        {
+            if (temporaryCreated)
+            {
+                File.Delete(temporaryPath);
+            }
         }
 
-        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(outcomes), cancellationToken);
         return new ProcessedArtifact(path, OutcomeLog.Kind, DisplayName, Description);
     }
 }

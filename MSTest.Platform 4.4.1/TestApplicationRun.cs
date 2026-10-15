@@ -74,7 +74,8 @@ internal sealed partial record TestApplicationRun(int ExitCode, string Output, s
             start.Environment[name] = value;
         }
 
-        using var application = Process.Start(start)!;
+        await using var child = ChildProcess.Start(start, cancellationToken);
+        var application = child.Process;
         var error = application.StandardError.ReadToEndAsync(cancellationToken);
         var output = await application.StandardOutput.ReadToEndAsync(cancellationToken);
         await application.WaitForExitAsync(cancellationToken);

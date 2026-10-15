@@ -1,7 +1,10 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Testing.Platform.Extensions.ArtifactPostProcessing;
-using Microsoft.Testing.Platform.Extensions.Messages;
 using MSTest.Platform.Filtering;
+using MSTest.Platform.Retries;
+using MSTest.Platform.Terminal;
+using MSTest.Showcase;
 
 namespace MSTest.Platform.Artifacts;
 
@@ -24,7 +27,7 @@ public sealed class OutcomeLogRunTests(TestContext testContext)
             [nameof(RouteTests.Plans_a_route_by_road), nameof(RouteTests.Plans_a_route_by_rail), nameof(RouteTests.Plans_a_route_by_sea)],
             outcomes.Select(static entry => entry.Name), SequenceOrder.InAnyOrder);
         Assert.HasCount(3, outcomes.Select(static entry => entry.Uid).Distinct());
-        Assert.AreSequenceEqual([PassedTestNodeStateProperty.CachedInstance.ToString()],
+        Assert.AreSequenceEqual(["passed"],
             outcomes.Select(static entry => entry.State).Distinct());
         Assert.Contains(OutcomeLog.FileName, run.Output);
     }
@@ -65,6 +68,116 @@ public sealed class OutcomeLogRunTests(TestContext testContext)
             new ArtifactPostProcessingContext(ArtifactPostProcessingTruncationReason.None), testContext.CancellationToken));
 
         Assert.AreEqual(partialJson, await File.ReadAllTextAsync(path, testContext.CancellationToken));
+    }
+
+    [TestMethod]
+    public async Task Retried_tests_have_one_final_passed_outcome_each()
+    {
+        using var run = await TestApplicationRun.StartAsync(
+            new Dictionary<string, string> { [OutcomeLog.Variable] = "1" }, testContext.CancellationToken,
+            "--filter", $"ClassName={typeof(UnsteadyTests).FullName}");
+        var outcomes = JsonSerializer.Deserialize<OutcomeLog.Entry[]>(await File.ReadAllTextAsync(
+            run.PathOf(OutcomeLog.FileName), testContext.CancellationToken))!;
+
+        Assert.AreEqual(0, run.ExitCode);
+        Assert.HasCount(2, outcomes);
+        Assert.AreSequenceEqual(["passed", "passed"], outcomes.Select(static entry => entry.State));
+    }
+
+    [TestMethod]
+    public async Task Outcomes_use_literal_states_without_diagnostic_explanations()
+    {
+        using var run = await TestApplicationRun.StartAsync(
+            new Dictionary<string, string> { [OutcomeLog.Variable] = "1" }, testContext.CancellationToken,
+            "--filter", $"ClassName={typeof(ShipmentTests).FullName}");
+        using var document = JsonDocument.Parse(await File.ReadAllTextAsync(
+            run.PathOf(OutcomeLog.FileName), testContext.CancellationToken));
+
+        Assert.AreEqual(2, run.ExitCode);
+        Assert.AreSequenceEqual(
+            [
+                $"{nameof(ShipmentTests.Ships_a_paid_order)}:passed",
+                $"{nameof(ShipmentTests.Ships_an_order_that_costs_more_than_was_paid)}:failed",
+                $"{nameof(ShipmentTests.Waits_for_a_carrier_that_never_answers)}:failed",
+                $"{nameof(ShipmentTests.Ships_abroad)}:skipped",
+            ],
+            document.RootElement.EnumerateArray().Select(static entry => $"{entry.GetProperty("Name").GetString()}:{entry.GetProperty("State").GetString()}"),
+            SequenceOrder.InAnyOrder);
+    }
+
+    [TestMethod]
+    public async Task Repeating_a_merge_reuses_its_identical_output()
+    {
+        using var run = await RunRoutesAsync();
+        var directory = Path.Combine(testContext.TestTempDirectory!, "merged");
+        var context = new ArtifactPostProcessingContext(ArtifactPostProcessingTruncationReason.None);
+        var merger = new OutcomeLogMerger();
+        var first = await merger.ProcessAsync([Input(run)], directory, context, testContext.CancellationToken);
+        Assert.IsNotNull(first);
+        var contents = await File.ReadAllTextAsync(first.Path, testContext.CancellationToken);
+
+        var second = await merger.ProcessAsync([Input(run)], directory, context, testContext.CancellationToken);
+
+        Assert.IsNotNull(second);
+        Assert.AreEqual(first.Path, second.Path);
+        Assert.AreEqual(contents, await File.ReadAllTextAsync(second.Path, testContext.CancellationToken));
+        Assert.HasCount(1, Directory.EnumerateFiles(directory));
+    }
+
+    [TestMethod]
+    [OSCondition(ConditionMode.Exclude, OperatingSystems.Windows)]
+    [DataRow("directory")]
+    [DataRow("file")]
+    [DataRow("hard")]
+    public async Task Filesystem_aliases_cannot_make_a_merge_overwrite_an_input(string linkKind)
+    {
+        var source = Directory.CreateDirectory(Path.Combine(testContext.TestTempDirectory!, "source"));
+        var input = Path.Combine(source.FullName, OutcomeLog.FileName);
+        const string json = "[ { \"Uid\": \"one\", \"Name\": \"Example\", \"State\": \"passed\" } ]";
+        await File.WriteAllTextAsync(input, json, testContext.CancellationToken);
+        var output = Path.Combine(testContext.TestTempDirectory!, "alias");
+        if (linkKind == "directory")
+        {
+            Directory.CreateSymbolicLink(output, source.FullName);
+        }
+        else
+        {
+            Directory.CreateDirectory(output);
+            var destination = Path.Combine(output, OutcomeLog.FileName);
+            if (linkKind == "file")
+            {
+                File.CreateSymbolicLink(destination, input);
+            }
+            else
+            {
+                await using var link = ChildProcess.Start(new ProcessStartInfo("ln", [input, destination]), testContext.CancellationToken);
+                await link.Process.WaitForExitAsync(testContext.CancellationToken);
+                Assert.AreEqual(0, link.Process.ExitCode);
+            }
+        }
+
+        try
+        {
+            var merger = new OutcomeLogMerger();
+            await Assert.ThrowsExactlyAsync<IOException>(() => merger.ProcessAsync(
+                [new InputArtifact(input, OutcomeLog.Kind, null, null, null, null)], output,
+                new ArtifactPostProcessingContext(ArtifactPostProcessingTruncationReason.None), testContext.CancellationToken));
+
+            Assert.AreEqual(json, await File.ReadAllTextAsync(input, testContext.CancellationToken));
+            Assert.HasCount(1, Directory.EnumerateFiles(output));
+        }
+        finally
+        {
+            // Remove the link before TestTempDirectory cleans up the source directory.
+            if (linkKind == "directory")
+            {
+                Directory.Delete(output);
+            }
+            else
+            {
+                File.Delete(Path.Combine(output, OutcomeLog.FileName));
+            }
+        }
     }
 
     private Task<TestApplicationRun> RunRoutesAsync() => TestApplicationRun.StartAsync(

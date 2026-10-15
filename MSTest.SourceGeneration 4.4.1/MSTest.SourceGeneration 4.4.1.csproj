@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="..\Shared\ChildProcess.cs" Link="Shared\ChildProcess.cs"/>
         <ProjectReference Include="..\MSTest.SourceGeneration.Library 4.4.1\MSTest.SourceGeneration.Library 4.4.1.csproj"/>
     </ItemGroup>
 

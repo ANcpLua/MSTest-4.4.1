@@ -26,7 +26,8 @@ internal sealed record TestApplicationRun(int ExitCode, string Output, Directory
         start.Environment[ExplicitAttribute.Variable] = "1";
         start.Environment[SpanFileExporter.Variable] = Path.Combine(results.FullName, SpanFile);
 
-        using var application = Process.Start(start)!;
+        await using var child = ChildProcess.Start(start, cancellationToken);
+        var application = child.Process;
         var output = await application.StandardOutput.ReadToEndAsync(cancellationToken);
         await application.WaitForExitAsync(cancellationToken);
 

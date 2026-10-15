@@ -53,8 +53,8 @@ internal sealed record TestApplicationRun(int ExitCode, string Output, Directory
             start.Environment[name] = value;
         }
 
-        using var application = Process.Start(start)!;
-        await using var cancellation = cancellationToken.Register(() => application.Kill(entireProcessTree: true));
+        await using var child = ChildProcess.Start(start, cancellationToken);
+        var application = child.Process;
         var output = await application.StandardOutput.ReadToEndAsync(cancellationToken);
         await application.WaitForExitAsync(cancellationToken);
 

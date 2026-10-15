@@ -27,7 +27,8 @@ internal sealed record TestApplicationRun(int ExitCode, string Output)
         start.Environment[Language] = "en-us";
         start.Environment[ExplicitAttribute.Variable] = "1";
 
-        using var application = Process.Start(start)!;
+        await using var child = ChildProcess.Start(start, cancellationToken);
+        var application = child.Process;
         var output = await application.StandardOutput.ReadToEndAsync(cancellationToken);
         await application.WaitForExitAsync(cancellationToken);
 

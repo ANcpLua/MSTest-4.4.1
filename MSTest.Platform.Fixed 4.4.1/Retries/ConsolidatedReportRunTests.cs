@@ -44,9 +44,9 @@ public sealed class ConsolidatedReportRunTests
     {
         var cases = XDocument.Load(_run.PathOf(JUnit)).Descendants("testcase").ToArray();
 
-        Assert.AreEquivalent(
+        Assert.AreSequenceEqual(
             [nameof(RestockTests.Finds_the_item_on_the_shelf), nameof(RestockTests.Finds_the_item_after_the_restock)],
-            cases.Select(static testCase => testCase.Attribute("name")!.Value));
+            cases.Select(static testCase => testCase.Attribute("name")!.Value), SequenceOrder.InAnyOrder);
         Assert.IsEmpty(cases.Elements("failure"));
     }
 

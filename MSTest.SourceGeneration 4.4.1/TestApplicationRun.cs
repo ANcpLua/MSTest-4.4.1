@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using MSTest.Showcase;
 
 namespace MSTest.SourceGeneration;
 
@@ -16,7 +17,8 @@ internal sealed record TestApplicationRun(int ExitCode, string Output)
         var start = new ProcessStartInfo(Environment.ProcessPath!, arguments) { RedirectStandardOutput = true };
         start.Environment[Language] = "en-us";
 
-        using var application = Process.Start(start)!;
+        await using var child = ChildProcess.Start(start, cancellationToken);
+        var application = child.Process;
         var output = await application.StandardOutput.ReadToEndAsync(cancellationToken);
         await application.WaitForExitAsync(cancellationToken);
 
