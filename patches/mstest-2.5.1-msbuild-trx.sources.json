@@ -1,0 +1,20 @@
+{
+  "baseCommit": "0bf77e3aedbf86f1fa16220bc951d3b52ba56763",
+  "sourceTag": "v4.5.1",
+  "files": {
+    "docs/Changelog-Platform.md": "0cdadb4df8a89b23f703c2ff8b82d3237d8e740fd728bba794c73a0d5561015d",
+    "src/Platform/Microsoft.Testing.Extensions.MSBuild/InternalAPI.Unshipped.txt": "b8551c10b08abd803f2cba1fd4806ebc1e909eeda513852529963066f441d887",
+    "src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildExtensions.cs": "4772eee002a8dd1c4938a283ff389a0181877eedefb3cebf3a44e12895aee9e1",
+    "src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildLifecycleCallbacksBase.cs": "86653f06d16d0adb35605f7218bc6364678b6ab6c4da184b3d3a657b4f862a55",
+    "src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildTestApplicationLifecycleCallbacks.cs": "9efea310eacc6063649c042b2870799c51264bb337c133f87a50205c444a2a11",
+    "src/Platform/Microsoft.Testing.Extensions.MSBuild/Microsoft.Testing.Extensions.MSBuild.csproj": "636fdcf01f72cf83a17e0f66ac7c0670df17a4058296e0714b9c0bd8c445323d",
+    "src/Platform/Microsoft.Testing.Extensions.MSBuild/TestingPlatformBuilderHook.cs": "94ead51dc541d848efcc3022c143a3190c14fbb5eacdc87c8efae4c4bb725d96",
+    "src/Platform/Microsoft.Testing.Extensions.PackagedApp/PackagedAppTestHostLauncher.ConnectBack.cs": "9235391daacb49db94c904d486be0d9418e5231d54e2f0e9e6fea88f9eb68f47",
+    "src/Platform/Microsoft.Testing.Extensions.PackagedApp/PackagedAppTestHostLauncher.cs": "b9d8eaf7d990a3fbf2978ca7a815e6f5efed268f716edbbe9f649ed9a96fdd6d",
+    "src/Platform/Microsoft.Testing.Platform/InternalAPI/InternalAPI.Unshipped.txt": "955cbc267503303f0a93577a7b14e1cdfc703b8515f290e2a5c72de3a806b32e",
+    "src/Platform/Microsoft.Testing.Platform/TestHostControllers/TestHostControllersManager.cs": "04fae69e8f595dde4c4217339ea8a21092509636ded55e6b19867839885fb7f4",
+    "test/UnitTests/Microsoft.Testing.Extensions.UnitTests/PackagedAppConnectBackHandshakeTests.cs": "88551450d205900189e01060dc842f1f8751302978c032e541f756d1eedf4838",
+    "src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildControllerLifetime.cs": "15ad4a351b04a933e7e95be73e4b513a7081c7873c299b5284b83b4860eeeed4",
+    "test/UnitTests/Microsoft.Testing.Platform.UnitTests/TestHostControllers/ControllerObserverTests.cs": "1b47dd4c53d4827b6c5bc302d5f726ef627aa623810b85cd8a4ac5262512c8df"
+  }
+}

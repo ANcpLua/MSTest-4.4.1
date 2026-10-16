@@ -1,0 +1,18 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Analyzers</RootNamespace>
+        <DefaultItemExcludes>$(DefaultItemExcludes);LegacyBase\**;CurrentBase\**</DefaultItemExcludes>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0"/>
+        <PackageReference Update="MSTest.Analyzers" GeneratePathProperty="true"/>
+        <Reference Include="MSTest.Analyzers">
+            <HintPath>$(PkgMSTest_Analyzers)/analyzers/dotnet/cs/MSTest.Analyzers.dll</HintPath>
+        </Reference>
+        <ProjectReference Include="LegacyBase\LegacyBase.csproj"/>
+        <ProjectReference Include="CurrentBase\CurrentBase.csproj"/>
+    </ItemGroup>
+
+</Project>

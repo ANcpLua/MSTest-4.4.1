@@ -1,7 +1,0 @@
-<Project Sdk="MSTest.Sdk">
-
-    <PropertyGroup>
-        <RootNamespace>MSTest.Conditions</RootNamespace>
-    </PropertyGroup>
-
-</Project>

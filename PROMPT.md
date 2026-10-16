@@ -1,364 +1,64 @@
-# Build the MSTest 4.4.1 showcase
+# Maintain the MSTest 4.5.1 showcase
 
-You build the repository `MSTest-4.4.1`: runnable examples of the complete surface that MSTest 4.4.1 on
-Microsoft.Testing.Platform 2.4.1 offers a test author. People copy from it and cite it. It is held to one
-standard: **the cleanest current usage, and no statement that was not read in a source or observed in a run.**
+This repository contains runnable MSTest examples. The clone and remote repository retain
+the historical `MSTest-4.4.1` name; current project and solution names use 4.5.1.
 
-This document is the brief and the decision record. Every decision carries its reason, so that you can
-judge the cases it does not name.
+## Pins and sources
 
-## Pins
+- .NET SDK 10.0.401, target net10.0, MSTest.Sdk 4.5.1, Microsoft.Testing.Platform 2.5.1.
+- The C# 12 project deliberately verifies source compatibility; other projects use C# 14.
+- LegacyBase deliberately references MSTest 3.11.1 to demonstrate inherited member behavior.
+- The hosting example is experimental: MSTest.Extensions.Hosting 4.5.1-alpha.26507.8 and
+  Microsoft.Testing.Extensions.Hosting 1.0.0-alpha.26507.8. Its project acknowledges only
+  the relevant MSTESTEXP and TPEXP API diagnostics.
+- Resolve APIs from restored packages and matching microsoft/testfx v4.5.1 source. The
+  `delta/4.5.1` files record the comparison with 4.4.1; they are historical evidence.
+- The sibling mstest-docs repository has generated API documentation and an AGENTS.md index.
 
-| | |
-|---|---|
-| .NET SDK | 10.0.401, `rollForward: latestFeature` |
-| Target framework | `net10.0` |
-| Language | C# 14 |
-| MSTest.Sdk | 4.4.1, pinned in `global.json` under `msbuild-sdks` |
-| Microsoft.Testing.Platform | 2.4.1 |
-| Machine | macOS arm64 |
+## Implementation and review
 
-## The present tense
+Use native MSTest attributes and Microsoft.Testing.Platform. Preserve full test-result arrays,
+source navigation and failure/cancellation semantics when demonstrating extension points.
+An analyzer example must run the analyzer against source and assert its diagnostics. Merely
+suppressing a diagnostic and running the offending code does not verify an analyzer.
 
-The repository describes what is. This one idea decides most questions of scope and wording.
+Every test must assert the behavior named by the test. Tests of assertions may use the assertion
+under test as their acceptance oracle, and exact AssertFailedException for rejection. A sample
+input that the compiler or generator reads is not automatically an executable test case.
+Intentionally failing runner fixtures need a passing parent that checks real output and structured
+results. Own child processes, terminate and join on cancellation, and restore global state in finally.
 
-- **One platform.** Microsoft.Testing.Platform runs every test. Projects use `MSTest.Sdk`, start with
-  `dotnet run` and `dotnet test`, and are configured by `testconfig.json`, MSBuild properties,
-  environment variables and command-line options.
-- **One time.** A version number stands in the repository name, the solution name, the project folder
-  names, the pin files and the first line of `README.md` and `API.md`. Code, comments and catalog rows
-  speak about the API as it is.
-- **Stable is the default.** Whatever the pinned packages ship without `[Experimental]` is simply the API.
-- **Experimental is shown, and marked.** An API that carries `[Experimental]` in the pinned packages is
-  part of the showcase. It lives in a project whose name ends in `.Experimental`, the project file
-  acknowledges the diagnostic id (`MSTESTEXP`, `TPEXP`), and its catalog rows say `experimental`.
-  Reason: a reader sees at the project boundary which examples may change, and stable projects stay free
-  of suppressions.
+Record one review row per test method and fixture class in `review/test-review.json`: oracle,
+exception handling, state and parallel safety, assertion/hygiene/structure grades and disposition.
+Pending entries are not completed reviews. A green test run does not convert them into reviews.
+Resolve every Failed/F finding before calling the review complete. Do not add exclusions or suppress
+inspection findings to make a gate green. Source examples intentionally exercising a diagnostic must
+explain any narrowly scoped existing acknowledgement; prefer compiler-only input for invalid patterns.
 
-Guardrail, checked at the end: this command prints nothing.
+## Verification
+
+Use the native MTP driver, with bounded parallelism:
 
 ```sh
-grep -rniE 'vstest|runsettings|Microsoft\.NET\.Test\.Sdk|new in |introduced in|since (version |MSTest |[0-9])|previously|no longer|used to |graduat|legacy|migrat' \
-  --include='*.cs' --include='*.csproj' --include='*.props' --include='*.json' --include='*.md' \
-  --exclude='PROMPT.md' --exclude-dir=artifacts --exclude-dir=delta .
+DOTNET_PROCESSOR_COUNT=2 dotnet test --solution MSTest-4.5.1.slnx --max-parallel-test-modules 1
 ```
 
-## Sources, in order of authority
+Do not pass MSBuild's `-m` syntax to the native test driver: it is not that driver's build option.
+Use `dotnet build MSTest-4.5.1.slnx -m:4` for the required zero-warning, zero-error build.
+Tests already compile changed sources; run a separate build only for that gate.
+Inspect with `jb inspectcode` at severity INFO and fix genuine findings. Native AOT publication and
+browser-WASM publication/execution are separate evidence from desktop tests. The browser projects
+belong to MSTest.Browser.slnx and run under Node after publishing, as README.md describes.
 
-Fetch them into one folder outside the repository, here called `ref/`.
+Commit and push the authorized, verified work directly to main. Preserve unrelated owner files.
+Do not archive this repository. Use the sibling combined samples/docs repository as the portable
+entry point once its own reviewed merge is complete.
 
-| Source | Fetch | What it is |
-|---|---|---|
-| `ref/testfx` | `git clone --depth 1 --branch v4.4.1 https://github.com/microsoft/testfx.git` | The pinned source: `src/`, `samples/public/`, `test/`. The acceptance and integration tests show intended usage and expected output. |
-| `ref/mstest-docs` | `gh repo clone ANcpLua/mstest-docs` | Guides and API reference for exactly these pins. Read its `CLAUDE.md` first. `docs/api` is generated from the 4.4.1 and 2.4.1 assemblies and is the proof of what exists. |
-| Changelogs | `docs/Changelog.md` and `docs/Changelog-Platform.md` of microsoft/testfx on `main` | Entries are still added to a release's section after its tag, so `main` is the complete text. Sections 4.5.0 and 2.5.0 are unreleased and describe nothing in the pinned packages. |
-| `ref/delta` | `python3 scripts/scout.py --from 4.3.3 --to 4.4.1 --output ref/delta` | 531 public API lines and 18 analyzer rows that 4.4.1 has and 4.3.3 lacks. A checklist for completeness, never a source of wording. |
-| `ref/TUnit-1.68.17` | `gh repo clone ANcpLua/TUnit-1.68.17` | The owner's TUnit showcase. The model for layout, `README.md`, `API.md` and `CLAUDE.md`. |
+## Historical review evidence
 
-**Evidence rule.** State no API name, signature, default, option, output line or behaviour from memory.
-Read it in a source above or observe it in a run, and keep the path with line, or the output line, next to
-the statement until the catalog row is written.
-
-## Scope: the whole surface
-
-Every item below ends in a catalog row with a runnable example, or in the list `Not shown` with a reason
-that holds on this machine.
-
-### MSTest.TestFramework 4.4.1: 87 public types
-
-| Topic | Types |
-|---|---|
-| Tests | `TestClassAttribute`, `TestMethodAttribute`, `STATestClassAttribute`, `STATestMethodAttribute`, `DiscoverInternalsAttribute`, `ITestMethod`, `TestResult`, `UnitTestOutcome` |
-| Lifecycle | `AssemblyInitializeAttribute`, `AssemblyCleanupAttribute`, `ClassInitializeAttribute`, `ClassCleanupAttribute`, `TestInitializeAttribute`, `TestCleanupAttribute`, `GlobalTestInitializeAttribute`, `GlobalTestCleanupAttribute`, `AssemblyFixtureProviderAttribute`, `InheritanceBehavior`, `TestContext` |
-| Data | `DataRowAttribute`, `DynamicDataAttribute`, `DynamicDataSourceType`, `TestDataRow<T>`, `ITestDataSource`, `ITestDataSourceIgnoreCapability`, `ITestDataSourceEmptyDataSourceExceptionInfo`, `TestDataSourceOptionsAttribute`, `TestDataSourceUnfoldingStrategy`, `DataSourceAttribute`, `DataAccessMethod`, `CombinatorialDataAttribute`, `CombinatorialValuesAttribute`, `CombinatorialRangeAttribute`, `CombinatorialRandomDataAttribute`, `ICombinatorialValuesProvider` |
-| Assertions | `Assert`, `AssertExtensions`, `StringAssert`, `CollectionAssert`, `AssertFailedException`, `AssertInconclusiveException`, `UnitTestAssertException` |
-| Conditions | `ConditionBaseAttribute`, `ConditionMode`, `OSConditionAttribute`, `OperatingSystems`, `ArchitectureConditionAttribute`, `TestArchitectures`, `CIConditionAttribute`, `ExecutableConditionAttribute`, `MemberConditionAttribute`, `IgnoreAttribute` |
-| Execution | `ParallelizeAttribute`, `DoNotParallelizeAttribute`, `ExecutionScope`, `ResourceLockAttribute`, `ResourceAccessMode`, `WellKnownResources`, `DependsOnAttribute`, `SequenceOrder`, `TimeoutAttribute`, `RetryAttribute`, `RetryBaseAttribute`, `RetryContext`, `RetryResult`, `DelayBackoffType` |
-| Metadata | `TestCategoryAttribute`, `TestCategoryBaseAttribute`, `OwnerAttribute`, `PriorityAttribute`, `DescriptionAttribute`, `TestPropertyAttribute`, `WorkItemAttribute`, `GitHubWorkItemAttribute` |
-| Filtering and run information | `ITestFilter`, `TestFilterProviderAttribute`, `TestFilterProviderAttribute<T>`, `TestFilterContext`, `TestFilterResult`, `TestFilterAction`, `TestRun`, `ITestRunInfo`, `PlannedTest` |
-| Output and files | `Logger`, `Logger.LogMessageHandler`, `MessageLevel`, `DeploymentItemAttribute` |
-
-Every public member of these types is covered, overloads grouped where they teach the same thing.
-
-**`Assert` has 48 method names**, each with a passing use and the failure message it produces:
-`AddValueFormatter`, `AreAllDistinct`, `AreAllNotNull`, `AreAllOfType`, `AreEqual`, `AreEquivalent`,
-`AreNotEqual`, `AreNotEquivalent`, `AreNotSame`, `AreNotSequenceEqual`, `AreSame`, `AreSequenceEqual`,
-`Contains`, `ContainsAll`, `ContainsSingle`, `DoesNotContain`, `DoesNotContainAll`, `DoesNotEndWith`,
-`DoesNotMatchRegex`, `DoesNotStartWith`, `EndsWith`, `Fail`, `HasCount`, `Inconclusive`, `IsEmpty`,
-`IsExactInstanceOfType`, `IsFalse`, `IsGreaterThan`, `IsGreaterThanOrEqualTo`, `IsInRange`,
-`IsInstanceOfType`, `IsLessThan`, `IsLessThanOrEqualTo`, `IsNegative`, `IsNotEmpty`,
-`IsNotExactInstanceOfType`, `IsNotInstanceOfType`, `IsNotNull`, `IsNull`, `IsPositive`, `IsTrue`,
-`MatchesRegex`, `Scope`, `StartsWith`, `Throws`, `ThrowsAsync`, `ThrowsExactly`, `ThrowsExactlyAsync`,
-the property `Assert.That` (the instance that custom assertions extend) and `AssertExtensions.That`
-(the assertion over a Boolean expression). Include the overloads for spans and memory, for comparers, for
-interpolated messages, and the members of `StringAssert` and `CollectionAssert`.
-
-**`TestContext` has 20 members**: `CancellationToken`, `Current`, `CurrentTestOutcome`, `DeploymentDirectory`,
-`FullyQualifiedTestClassName`, `Properties`, `ResultsDirectory`, `TestData`, `TestDisplayName`,
-`TestException`, `TestName`, `TestResultsDirectory`, `TestRunCount`, `TestRunDirectory`,
-`TestRunResultsDirectory`, `TestTempDirectory`, `AddResultFile`, `DisplayMessage`, `Write`, `WriteLine`.
-
-**Experimental in the pinned packages** (`MSTESTEXP`): `Assert.AddValueFormatter`, `Assert.Scope`,
-`TestContext.Current`, `ITestFilter`, `TestFilterProviderAttribute`, `TestFilterProviderAttribute<T>`,
-`TestFilterContext`, `TestFilterResult`, `TestFilterAction`, `TestRun`, `ITestRunInfo`, `PlannedTest`,
-`RetryBaseAttribute`, `RetryContext`, `RetryResult`, `ITestDataSourceEmptyDataSourceExceptionInfo`.
-Confirm the list against `docs/api` before you rely on it; `[Experimental]` can sit on single members.
-
-### Analyzers
-
-All 83 documented rules under `ref/mstest-docs/docs/mstest/analyzers/`, plus `AOTSG0001` to `AOTSG0005`
-of the source generator. Each rule gets the flagged pattern, the accepted form, the diagnostic line as the
-compiler prints it, and the result of its code fix where it has one.
-
-### MSTest.Sdk and configuration
-
-- Project properties: `TestingExtensionsProfile` (`Default`, `AllMicrosoft`, `None`), every
-  `EnableMicrosoftTestingExtensions…` switch, `EnableMSTestSourceGeneration`, `EnableAspireTesting`,
-  `EnablePlaywright`, `IsTestApplication`, `GenerateTestingPlatformEntryPoint`,
-  `TestingPlatformCommandLineArguments`, the `TestingPlatformEnvironmentVariable` item, `MSTestAnalysisMode`.
-- `testconfig.json`: every key of the sections `assemblyResolution`, `deployment`, `output`, `parallelism`,
-  `execution` (with `dependencies`: `chains` and `nodes`) and `timeout`.
-- Environment variables that MSTest and the platform read.
-- Source generation and Native AOT: `EnableMSTestSourceGeneration` on the normal runtime, a project
-  published with `PublishAot`, and how a reader tells that the generated path ran.
-
-### Microsoft.Testing.Platform 2.4.1
-
-- Every command-line option of the platform and of each extension, with the output it produces.
-- Every extension Microsoft ships: TRX, HTML, JUnit and CTRF reports, GitHub Actions and Azure DevOps
-  reports, code coverage with summary and thresholds, crash dump, hang dump, retry of failed tests,
-  hot reload, telemetry, OpenTelemetry, artifact post-processing and report merging under `dotnet test`.
-- Exit codes and their meaning.
-- Server mode and its client.
-- WebAssembly: a `browser-wasm` test application builds and runs on this machine without a workload.
-
-## Extensions: the centrepiece
-
-A framework is judged by how it bends. Each extension point gets its own example: a small, real
-extension with a name from a domain, a test that proves it took effect, and a test that proves what
-happens without it.
-
-### Extending MSTest
-
-| Extension point | Build |
-|---|---|
-| `TestMethodAttribute` (virtual execution) | an attribute that wraps the test run, for example one that runs the test under a fixed culture and restores it |
-| `TestClassAttribute` (virtual) | a test class attribute that supplies its own test method attribute |
-| `DataRowAttribute` (unsealed) | a typed row attribute for one domain value |
-| `ITestDataSource` with `ITestDataSourceIgnoreCapability` and `TestDataRow<T>` | a data attribute that generates rows, names them, ignores single rows and attaches categories |
-| `ICombinatorialValuesProvider` | a parameter attribute that supplies the values of one parameter |
-| `ConditionBaseAttribute` | a condition with its own `GroupName`, combined with a built-in condition in the same and in another group |
-| `TestCategoryBaseAttribute` | a category attribute that carries several categories |
-| `UnitTestAssertException` | an assertion exception of its own, and how the run reports it |
-| `Assert.That` with C# 14 extension members | custom assertions as extension members of `Assert`: the instance form called as `Assert.That.IsPrime(value)`, the static form called as `Assert.IsPrime(value)`, both throwing `AssertFailedException` and with `[CallerArgumentExpression]` in the message |
-| `Logger.OnLogMessage` | a listener for what `Logger.LogMessage` writes |
-| `RetryBaseAttribute` (experimental) | a retry policy that decides by exception type and exposes every attempt through `RetryResult.AllResults` |
-| `ITestFilter` with `TestFilterProviderAttribute<T>` (experimental) | a filter that runs, drops and skips by metadata; one provider per assembly |
-| `AssemblyFixtureProviderAttribute`, `TestRun.Current` (experimental) | a shared fixture that starts only when a planned test needs it |
-| `Assert.Scope`, `Assert.AddValueFormatter` (experimental) | several failures reported together; a formatter for a domain type |
-
-### Extending the platform
-
-A custom entry point (`GenerateTestingPlatformEntryPoint` set to `false`) registers each of these, and a
-test or a recorded run proves that it was called:
-
-| Namespace | Interfaces |
-|---|---|
-| `Microsoft.Testing.Platform.Extensions` | `IExtension`, `IAsyncInitializableExtension`, `IAsyncCleanableExtension`, `IDataConsumer`, `IBlockingDataConsumer` |
-| `…Extensions.TestHost` | `ITestHostExtension`, `ITestSessionLifetimeHandler`, `ITestHostApplicationLifetime` |
-| `…Extensions.TestHostControllers` | `ITestHostControllersExtension`, `ITestHostEnvironmentVariableProvider`, `ITestHostProcessLifetimeHandler`, `ITestHostLauncher`, `ITestHostControllerConnectionAuthorizer` |
-| `…Extensions.CommandLine` | `ICommandLineOptionsProvider` |
-| `…Extensions.OutputDevice` | `IOutputDeviceDataProducer` |
-| `…Extensions.TestHostOrchestrator` | `ITestHostOrchestratorExtension`, `ITestHostExecutionOrchestrator`, `ITestHostOrchestratorApplicationLifetime` |
-| `…Extensions.ArtifactPostProcessing` | `IArtifactPostProcessor`, `IArtifactPostProcessingManager`, `IArtifactPostProcessorRequiresPostProcessing` |
-
-Also: the platform services an extension can request, the capabilities, configuration through
-`IConfiguration`, and the message types a data consumer receives.
-
-## Decisions for the code
-
-An example teaches MSTest. The C# around it is the best current C#, and it stays out of the way.
-
-### Language
-
-Use these where they make the example shorter or clearer; an example that needs a comment to explain its
-C# uses too much of it.
-
-| Feature | Where it belongs here |
-|---|---|
-| File-scoped namespaces, implicit usings, nullable enabled | everywhere |
-| Primary constructors | test classes that receive `TestContext`; fixtures; small domain types |
-| Collection expressions and spread | expected values, data rows, arguments |
-| Raw string literals | expected output, JSON, multi-line messages |
-| Records and `required` members | domain values in examples, data rows of `TestDataRow<T>` |
-| Pattern matching, list patterns, switch expressions | decisions inside extensions |
-| `field` keyword | properties with a guard |
-| Extension members (C# 14 extension blocks) | custom assertions on `Assert`, helpers on `TestContext` |
-| Null-conditional assignment | optional wiring in fixtures |
-| `nameof` of unbound generic types | names of generic fixtures and attributes |
-| `params` collections and span overloads | assertion helpers, the span and memory assertions |
-| `System.Threading.Lock` | shared state in parallel examples |
-| `TimeProvider` | every example in which time matters |
-| `await using`, `IAsyncDisposable` | asynchronous cleanup |
-| Static abstract interface members, generic attributes | typed data sources and providers |
-
-### Constants for strings
-
-A string that names something is a constant: a category, a resource lock, a property key, an environment
-variable, a display name, a work item, a configuration key, a message that a test compares. It is a
-`private const` in the class that owns it, or a member of one `internal static class` per project when
-several classes share it. Members are referenced with `nameof`.
-Reason: the name is written once, a rename is one edit, and a typo becomes a compile error. For resource
-locks the analyzer asks for the same (MSTEST0073).
-
-### Private helpers
-
-- What two tests of a class share goes into a `private static` method or a local function of that class,
-  named from the domain for what it decides or builds: `PlaceOrder`, `ShippedOrder`.
-- What several classes share goes into `Support/` of the project as an `internal static class`.
-- The API under demonstration stays in the test body. A helper may build the order; it never hides the
-  attribute, the assertion or the option the example is about.
-  Reason: the reader copies the test body. What is not visible there is not taught.
-
-### Setups
-
-| Need | Form |
-|---|---|
-| Per-test state that is built synchronously | the constructor and `readonly` fields; `TestContext` as a constructor parameter |
-| Per-test setup that awaits | `[TestInitialize]` returning `Task` |
-| Per-test cleanup | `Dispose` or `DisposeAsync`; `[TestCleanup]` when cleanup needs the outcome of the test |
-| State shared by a class | `[ClassInitialize]` and `[ClassCleanup]`, with `InheritanceBehavior` shown on a base class |
-| State shared by the assembly | `[AssemblyInitialize]` and `[AssemblyCleanup]` |
-| Code around every test of the assembly | `[GlobalTestInitialize]` and `[GlobalTestCleanup]` |
-| Files | `TestContext.TestTempDirectory` |
-| Cancellation | `TestContext.CancellationToken` passed to every awaitable that takes one |
-
-Show the complete order of the lifecycle in one example that records it and asserts the recorded order.
-Confirm each row against `ref/mstest-docs/docs/mstest/writing-tests/lifecycle.md` and `testcontext.md`.
-
-### Tests
-
-- Every class is `sealed` and has one XML summary that says what the example teaches.
-- Test names read as sentences: `Ships_after_the_order_was_paid`.
-- The most specific assertion is used: `Assert.HasCount`, never a comparison inside `Assert.IsTrue`.
-- Each example asserts the behaviour it teaches. **Sensitivity:** the test fails when the feature is
-  removed. Prove it once on a scratch copy outside the repository.
-- Tests are deterministic: a `TimeProvider` instead of the clock, a wait handle instead of a delay, no
-  network, no path outside `TestTempDirectory`.
-- A demonstration that fails, times out or is cancelled on purpose carries `[Explicit]` from
-  `Shared/ExplicitAttribute.cs` (skipped unless `MSTEST_EXPLICIT=1`), and its summary states the outcome.
-  The ordinary run of every project ends with exit code 0.
-- An analyzer's flagged pattern stands between `#pragma warning disable` and `#pragma warning restore`,
-  next to the accepted form.
-
-### Projects
-
-- `Directory.Build.props` holds what all projects share: `net10.0`, nullable, implicit usings, artifacts
-  output, `TreatWarningsAsErrors`, `MSTestAnalysisMode` set to `Recommended`. Package versions are managed
-  centrally.
-- Every assembly states its parallelisation in `AssemblyPolicies.cs` (MSTEST0001 is an error here).
-- A project is `<Name> 4.4.1/<Name> 4.4.1.csproj`.
-
-## Layout
-
-Projects follow topics. Adapt the cut when a topic turns out too large or too small.
-
-| Project | Shows |
-|---|---|
-| `MSTest 4.4.1` | the smallest complete project: where a reader starts |
-| `MSTest.Assertions 4.4.1` | `Assert`, `StringAssert`, `CollectionAssert`, `Assert.That`, failure messages |
-| `MSTest.Data 4.4.1` | data rows, dynamic data, typed rows, combinatorial data, display names, unfolding |
-| `MSTest.Lifecycle 4.4.1` | setups, fixtures, `TestContext`, timeouts, cancellation |
-| `MSTest.Execution 4.4.1` | parallelism, resource locks, dependencies and order, retry, conditions, output |
-| `MSTest.Metadata 4.4.1` | categories, owner, priority, properties, work items, filtering on the command line |
-| `MSTest.Extensions 4.4.1` | every stable extension point of the framework |
-| `MSTest.Extensions.Experimental 4.4.1` | every experimental extension point; further `.Experimental` projects where one assembly allows one provider |
-| `MSTest.Analyzers 4.4.1` | every rule |
-| `MSTest.SourceGeneration 4.4.1`, `MSTest.NativeAot 4.4.1` | generated discovery, Native AOT |
-| `MSTest.Configuration 4.4.1` | `testconfig.json`, MSBuild properties, environment variables |
-| `MSTest.Platform 4.4.1` | command-line options, exit codes, terminal output |
-| `MSTest.Platform.Reports 4.4.1` | reports, coverage, dumps, retry of failed tests, telemetry |
-| `MSTest.Platform.Extensions 4.4.1` | writing platform extensions, custom entry point, services, server mode |
-| `MSTest.Aspire 4.4.1`, `MSTest.Playwright 4.4.1` | `EnableAspireTesting`, `EnablePlaywright` |
-| `MSTest.WebAssembly 4.4.1` | a test application on `browser-wasm` |
-
-Root files: `global.json`, `Directory.Build.props`, `Directory.Packages.props`, `.gitignore`,
-`MSTest 4.4.1.slnx`, `README.md`, `API.md`, `CLAUDE.md`, `Shared/ExplicitAttribute.cs`,
-`scripts/scout.py`, `.github/workflows/scout.yml`. The last three exist and stay.
-
-## Documents
-
-- **`API.md`**: one table per topic. Columns: API, Namespace, Kind, Status (`stable` or `experimental`),
-  Example, Verified by, Observed, Note. A last section `Not shown` lists what has no example, with the
-  reason and the source line that proves the reason. Generate the file from one data file per project,
-  so that no row is typed twice.
-- **`README.md`**: what the repository is, the project table, the commands, and the counts of the last
-  full run with date, SDK and machine. Only counts that the final run printed.
-- **`CLAUDE.md`**: the conventions of this document in the short form a maintainer needs, and the steps
-  of a version update: fetch the scouting pull request, read `delta/<version>/`, add examples for what
-  is new, rename the versioned paths, run everything, update the counts.
-
-## Method
-
-Work topic by topic, and finish a topic before the next one starts.
-
-1. **Read.** For each API: the implementing source, one upstream test or sample, the guide page.
-2. **Write** the example and its support code.
-3. **Run.** Build with 0 warnings. Run the project. Run every `[Explicit]` demonstration.
-4. **Break.** Remove the feature on a scratch copy; the test has to fail.
-5. **Record** the catalog row from what the run printed, and write the project's data file to disk.
-6. **Refute.** A second reader who did not write the example gets the rows and the code, rebuilds,
-   reruns, and tries to prove each statement false. What it proves is corrected; then the counts of all
-   rows of the project are brought to the final run.
-
-An interruption then costs one step, because every finished step is on disk.
-
-### Traps that the first attempt fell into
-
-An earlier attempt at this repository was reviewed adversarially. Every area had false statements in its
-first draft, of these kinds:
-
-| Trap | Check |
-|---|---|
-| A default or an activation rule stated too narrowly | read the source that decides it, all branches |
-| An output line paraphrased | quote the line from the run |
-| A test that passes without the feature | step 4 |
-| A statement true for one case and written for all | name the cases; test the neighbours (a test fixture, a class fixture, an assembly fixture) |
-| "Cannot be shown on this machine" that was never tried | try first; `browser-wasm` was claimed impossible and works |
-| Evidence that belongs to another rule or another run | the command in the log names the rule or the test |
-| Counts that went stale after a correction | step 6, last sentence |
-| A row that credits the wrong thing | the row describes the API, and the API exists in `docs/api` |
-
-## Done
-
-- Every type, member, rule, property, key and option under Scope has a catalog row or stands under
-  `Not shown` with a reason that was tested.
-- `dotnet build "MSTest 4.4.1.slnx"` ends with 0 warnings and 0 errors.
-- The ordinary run of every project ends with exit code 0; every `[Explicit]` demonstration ends as its
-  summary says.
-- The Native AOT executable runs and passes.
-- The guardrail command prints nothing. `git diff --check` prints nothing.
-- Every added line of `ref/delta/api.md` that belongs to a consumer-facing type is found in `API.md`.
-- `README.md` holds the counts of the final full run and no other.
-
-## What exists
-
-The repository holds the first attempt: about 40 projects with about 300 examples, cut by changelog entry
-and written before these conventions. It is raw material. Move what holds into the topic layout and
-rewrite it to the conventions.
-
-A review proved 62 errors that are still in that code: contradicted and unsupported statements, wrong
-attributions, weak reasons, missing examples. They are listed at the end of this document. Correct each
-one you carry over.
-
-Trust none of it without step 3 and step 4.
-
-## Boundaries
-
-- Commit, push, publish and create the GitHub repository only when the owner says so.
-- Install no workload and no global tool. Start no container and no service.
-- Build and run one project at a time, with `DOTNET_PROCESSOR_COUNT=2`.
-- Delete, move or overwrite a file that you did not create only after the owner's word.
+The following is the prior 4.4.1 audit, retained as evidence rather than a current completion claim.
+Names, version comparisons and prior command results below describe that historical snapshot.
+The current per-method review and its fixes are recorded separately.
 
 ## Known errors in the first attempt
 

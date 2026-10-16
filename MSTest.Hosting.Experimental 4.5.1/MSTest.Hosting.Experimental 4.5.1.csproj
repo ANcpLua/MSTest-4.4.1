@@ -1,0 +1,12 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <RootNamespace>MSTest.Hosting.Experimental</RootNamespace>
+    <TestingPlatformHostFactory>MSTest.Hosting.Experimental.TestHost.CreateHost</TestingPlatformHostFactory>
+    <NoWarn>$(NoWarn);MSTESTEXP;TPEXP</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MSTest.Extensions.Hosting" Version="4.5.1-alpha.26507.8" />
+    <PackageReference Include="Microsoft.Testing.Extensions.Hosting" Version="1.0.0-alpha.26507.8" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+  </ItemGroup>
+</Project>

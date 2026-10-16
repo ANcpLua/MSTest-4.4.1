@@ -1,0 +1,10 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Conditions</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\Shared\ChildProcess.cs" Link="Shared\ChildProcess.cs"/>
+    </ItemGroup>
+</Project>

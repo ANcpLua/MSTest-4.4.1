@@ -1,0 +1,528 @@
+diff --git a/docs/Changelog-Platform.md b/docs/Changelog-Platform.md
+index a5ae72d..3f0a21e 100644
+--- a/docs/Changelog-Platform.md
++++ b/docs/Changelog-Platform.md
+@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+ 
+ ## <a name="2.5.1" />[2.5.1] - Unreleased
+ 
++### Fixed
++
++* Forward MSBuild application metadata, test failures and run summaries through the controller when TRX or another extension restarts the test host. Keep the outer build pipe in the controller, authorize the child relay for the exact sandbox identity, and preserve in-process runs that need no controller.
++
+ ## <a name="2.5.0" />[2.5.0] - 2026-10-05
+ 
+ See full log [of v4.4.1...v4.5.0](https://github.com/microsoft/testfx/compare/v4.4.1...v4.5.0)
+diff --git a/src/Platform/Microsoft.Testing.Extensions.MSBuild/InternalAPI.Unshipped.txt b/src/Platform/Microsoft.Testing.Extensions.MSBuild/InternalAPI.Unshipped.txt
+index 656b621..241bac7 100644
+--- a/src/Platform/Microsoft.Testing.Extensions.MSBuild/InternalAPI.Unshipped.txt
++++ b/src/Platform/Microsoft.Testing.Extensions.MSBuild/InternalAPI.Unshipped.txt
+@@ -7,3 +7,20 @@ const Microsoft.Testing.Platform.IPC.CommandLineOptionMessageFieldsId.MinimumAri
+ const Microsoft.Testing.Platform.IPC.CommandLineOptionMessageFieldsId.ProviderUid = 6 -> ushort
+ const Microsoft.Testing.Platform.Helpers.EnvironmentVariableConstants.TESTINGPLATFORM_TESTHOSTCONTROLLER_CONTROLPIPENAME = "TESTINGPLATFORM_TESTHOSTCONTROLLER_CONTROLPIPENAME" -> string!
+ Microsoft.Testing.Platform.IPC.NamedPipeServer.WaitForDisconnectAsync(System.TimeSpan timeout) -> System.Threading.Tasks.Task<bool>!
++Microsoft.Testing.Extensions.MSBuild.MSBuildControllerLifetime
++Microsoft.Testing.Extensions.MSBuild.MSBuildControllerLifetime.BeforeTestHostProcessStartAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
++Microsoft.Testing.Extensions.MSBuild.MSBuildControllerLifetime.DisplayName.get -> string!
++Microsoft.Testing.Extensions.MSBuild.MSBuildControllerLifetime.Dispose() -> void
++Microsoft.Testing.Extensions.MSBuild.MSBuildControllerLifetime.MSBuildControllerLifetime(System.IServiceProvider! serviceProvider, Microsoft.Testing.Platform.Configurations.IConfiguration! configuration, Microsoft.Testing.Platform.CommandLine.ICommandLineOptions! commandLineOptions, Microsoft.Testing.Platform.Helpers.IEnvironment! environment, Microsoft.Testing.Platform.Logging.ILoggerFactory! loggerFactory, Microsoft.Testing.Platform.Helpers.ITask! task) -> void
++Microsoft.Testing.Extensions.MSBuild.MSBuildControllerLifetime.OnTestHostProcessExitedAsync(Microsoft.Testing.Platform.Extensions.TestHostControllers.ITestHostProcessInformation! testHostProcessInformation, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
++Microsoft.Testing.Extensions.MSBuild.MSBuildControllerLifetime.OnTestHostProcessStartedAsync(Microsoft.Testing.Platform.Extensions.TestHostControllers.ITestHostProcessInformation! testHostProcessInformation, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
++Microsoft.Testing.Extensions.MSBuild.MSBuildControllerLifetime.Uid.get -> string!
++Microsoft.Testing.Extensions.MSBuild.MSBuildControllerLifetime.UpdateAsync(Microsoft.Testing.Platform.Extensions.TestHostControllers.IEnvironmentVariables! environmentVariables) -> System.Threading.Tasks.Task!
++Microsoft.Testing.Extensions.MSBuild.MSBuildControllerLifetime.ValidateTestHostEnvironmentVariablesAsync(Microsoft.Testing.Platform.Extensions.TestHostControllers.IReadOnlyEnvironmentVariables! environmentVariables) -> System.Threading.Tasks.Task<Microsoft.Testing.Platform.Extensions.ValidationResult>!
++Microsoft.Testing.Extensions.MSBuild.MSBuildLifecycleCallbacksBase.CreatePipeClient(string? pipeName = null) -> Microsoft.Testing.Platform.IPC.NamedPipeClient!
++Microsoft.Testing.Extensions.NamedPipeServerFactory
++const Microsoft.Testing.Extensions.MSBuild.MSBuildControllerLifetime.PipeEnvironmentVariable = "TESTINGPLATFORM_MSBUILD_RELAY_PIPE" -> string!
++static Microsoft.Testing.Extensions.NamedPipeServerFactory.CreateAndBind(Microsoft.Testing.Platform.TestHostControllers.NamedPipeServerEndpoint! endpoint, System.Func<Microsoft.Testing.Platform.IPC.IRequest!, System.Threading.Tasks.Task<Microsoft.Testing.Platform.IPC.IResponse!>!>! callback, Microsoft.Testing.Platform.Helpers.IEnvironment! environment, Microsoft.Testing.Platform.Logging.ILogger! logger, Microsoft.Testing.Platform.Helpers.ITask! task, System.IServiceProvider! serviceProvider, System.Threading.CancellationToken cancellationToken) -> Microsoft.Testing.Platform.IPC.NamedPipeServer!
++static Microsoft.Testing.Extensions.NamedPipeServerFactory.CreateEndpoint() -> Microsoft.Testing.Platform.TestHostControllers.NamedPipeServerEndpoint!
++*REMOVED*Microsoft.Testing.Extensions.MSBuild.MSBuildLifecycleCallbacksBase.CreatePipeClient() -> Microsoft.Testing.Platform.IPC.NamedPipeClient!
++Microsoft.Testing.Extensions.MSBuild.MSBuildLifecycleCallbacksBase.CreatePipeClient(string? pipeName = null) -> Microsoft.Testing.Platform.IPC.NamedPipeClient!
+diff --git a/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildExtensions.cs b/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildExtensions.cs
+index 953e114..37023fd 100644
+--- a/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildExtensions.cs
++++ b/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildExtensions.cs
+@@ -5,6 +5,7 @@
+ using Microsoft.Testing.Platform.Builder;
+ using Microsoft.Testing.Platform.Extensions;
+ using Microsoft.Testing.Platform.Services;
++using Microsoft.Testing.Platform.TestHostControllers;
+ 
+ #if !NETCOREAPP
+ using Polyfills;
+@@ -30,6 +31,14 @@ public static void AddMSBuild(this ITestApplicationBuilder builder)
+         }
+ 
+         builder.CommandLine.AddProvider(() => new MSBuildCommandLineProvider());
++        ((TestHostControllersManager)builder.TestHostControllers).AddObserver(
++            new CompositeExtensionFactory<MSBuildControllerLifetime>(serviceProvider => new MSBuildControllerLifetime(
++                serviceProvider,
++                serviceProvider.GetConfiguration(),
++                serviceProvider.GetCommandLineOptions(),
++                serviceProvider.GetEnvironment(),
++                serviceProvider.GetLoggerFactory(),
++                serviceProvider.GetTask())));
+         builder.TestHost.AddTestHostApplicationLifetime(
+             serviceProvider => new MSBuildTestApplicationLifecycleCallbacks(
+                 serviceProvider.GetConfiguration(),
+diff --git a/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildLifecycleCallbacksBase.cs b/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildLifecycleCallbacksBase.cs
+index 6a7b5cd..2628022 100644
+--- a/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildLifecycleCallbacksBase.cs
++++ b/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildLifecycleCallbacksBase.cs
+@@ -38,9 +38,9 @@ protected virtual void RegisterAdditionalSerializers(NamedPipeClient pipeClient)
+     {
+     }
+ 
+-    protected NamedPipeClient CreatePipeClient()
++    protected NamedPipeClient CreatePipeClient(string? pipeName = null)
+     {
+-        NamedPipeClient pipeClient = new(GetPipeName());
++        NamedPipeClient pipeClient = new(pipeName ?? GetPipeName());
+         pipeClient.RegisterSerializer(new ModuleInfoRequestSerializer(), typeof(ModuleInfoRequest));
+         pipeClient.RegisterSerializer(new VoidResponseSerializer(), typeof(VoidResponse));
+         RegisterAdditionalSerializers(pipeClient);
+diff --git a/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildTestApplicationLifecycleCallbacks.cs b/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildTestApplicationLifecycleCallbacks.cs
+index fef60fe..9ae9dd5 100644
+--- a/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildTestApplicationLifecycleCallbacks.cs
++++ b/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildTestApplicationLifecycleCallbacks.cs
+@@ -5,6 +5,7 @@
+ using Microsoft.Testing.Platform.CommandLine;
+ using Microsoft.Testing.Platform.Configurations;
+ using Microsoft.Testing.Platform.Extensions.TestHost;
++using Microsoft.Testing.Platform.Helpers;
+ using Microsoft.Testing.Platform.IPC;
+ 
+ namespace Microsoft.Testing.Extensions.MSBuild;
+@@ -17,8 +18,12 @@ public MSBuildTestApplicationLifecycleCallbacks(
+         ICommandLineOptions commandLineOptions)
+         : base(configuration, commandLineOptions)
+     {
++        _controllerManaged = commandLineOptions.IsOptionSet(PlatformCommandLineProvider.TestHostControllerPIDOptionKey);
+     }
+ 
++    private readonly SystemEnvironment _environment = new();
++    private readonly bool _controllerManaged;
++
+     public NamedPipeClient? PipeClient { get; private set; }
+ 
+     public string Uid => nameof(MSBuildTestApplicationLifecycleCallbacks);
+@@ -27,7 +32,13 @@ public MSBuildTestApplicationLifecycleCallbacks(
+ 
+     public async Task BeforeRunAsync(CancellationToken cancellationToken)
+     {
+-        PipeClient = CreatePipeClient();
++        // A controller-managed child connects only to the controller's authorized relay. Falling
++        // back to the outer build pipe would violate the sandbox boundary and hide a missing relay.
++        string? pipeName = _controllerManaged
++            ? _environment.GetEnvironmentVariable(MSBuildControllerLifetime.PipeEnvironmentVariable)
++                ?? throw new InvalidOperationException("The MSBuild controller relay pipe is missing.")
++            : null;
++        PipeClient = CreatePipeClient(pipeName);
+         await ConnectAndSendModuleInfoAsync(PipeClient, cancellationToken).ConfigureAwait(false);
+     }
+ 
+diff --git a/src/Platform/Microsoft.Testing.Extensions.MSBuild/Microsoft.Testing.Extensions.MSBuild.csproj b/src/Platform/Microsoft.Testing.Extensions.MSBuild/Microsoft.Testing.Extensions.MSBuild.csproj
+index 2f3064a..d5a39b1 100644
+--- a/src/Platform/Microsoft.Testing.Extensions.MSBuild/Microsoft.Testing.Extensions.MSBuild.csproj
++++ b/src/Platform/Microsoft.Testing.Extensions.MSBuild/Microsoft.Testing.Extensions.MSBuild.csproj
+@@ -17,6 +17,8 @@
+     <Compile Include="$(RepoRoot)src\Platform\Microsoft.Testing.Platform\ServerMode\DotnetTest\IPC\ObjectFieldIds.cs" Link="IPC\ObjectFieldIds.cs" />
+     <Compile Include="$(RepoRoot)src\Platform\Microsoft.Testing.Platform\Resources\PlatformResources.cs" Link="Resources\PlatformResources.cs" />
+ 
++    <Compile Include="$(RepoRoot)src/Platform/SharedExtensionHelpers/NamedPipeServerFactory.cs" Link="Helpers/NamedPipeServerFactory.cs" />
++
+     <!-- Embedded helpers from Microsoft.Testing.Platform -->
+     <Compile Include="$(RepoRoot)src\Platform\Microsoft.Testing.Platform\Helpers\RoslynString.cs" Link="Helpers\RoslynString.cs" />
+     <Compile Include="$(RepoRoot)src\Platform\Microsoft.Testing.Platform\Helpers\ApplicationStateGuard.cs" Link="Helpers\ApplicationStateGuard.cs" />
+diff --git a/src/Platform/Microsoft.Testing.Extensions.MSBuild/TestingPlatformBuilderHook.cs b/src/Platform/Microsoft.Testing.Extensions.MSBuild/TestingPlatformBuilderHook.cs
+index 4391827..4b79f4a 100644
+--- a/src/Platform/Microsoft.Testing.Extensions.MSBuild/TestingPlatformBuilderHook.cs
++++ b/src/Platform/Microsoft.Testing.Extensions.MSBuild/TestingPlatformBuilderHook.cs
+@@ -1,7 +1,6 @@
+ ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+ // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+ 
+-using Microsoft.Testing.Extensions.MSBuild;
+ using Microsoft.Testing.Platform.Builder;
+ 
+ #if !NETCOREAPP
+@@ -15,8 +14,6 @@ namespace Microsoft.Testing.Platform.MSBuild;
+ /// </summary>
+ public static class TestingPlatformBuilderHook
+ {
+-    private const string TestHostControllerPidOption = "--internal-testhostcontroller-pid";
+-
+     /// <summary>
+     /// Adds MSBuild support to the Testing Platform Builder.
+     /// </summary>
+@@ -35,15 +32,8 @@ public static void AddExtensions(ITestApplicationBuilder testApplicationBuilder,
+             return;
+         }
+ 
+-        // The full-trust controller owns the MSBuild-node connection and relays the child host's
+-        // messages through the controller protocol. A sandboxed test host cannot and must not open
+-        // the outer build pipe directly.
+-        if (_.Contains(TestHostControllerPidOption, StringComparer.Ordinal))
+-        {
+-            testApplicationBuilder.CommandLine.AddProvider(() => new MSBuildCommandLineProvider());
+-            return;
+-        }
+-
++        // Controller-managed children register the same outcome consumer, but their lifecycle connects
++        // to the controller's authorized relay rather than opening the outer MSBuild pipe.
+         testApplicationBuilder.AddMSBuild();
+     }
+ }
+diff --git a/src/Platform/Microsoft.Testing.Extensions.PackagedApp/PackagedAppTestHostLauncher.ConnectBack.cs b/src/Platform/Microsoft.Testing.Extensions.PackagedApp/PackagedAppTestHostLauncher.ConnectBack.cs
+index 7ab4a64..fbcffe0 100644
+--- a/src/Platform/Microsoft.Testing.Extensions.PackagedApp/PackagedAppTestHostLauncher.ConnectBack.cs
++++ b/src/Platform/Microsoft.Testing.Extensions.PackagedApp/PackagedAppTestHostLauncher.ConnectBack.cs
+@@ -7,7 +7,7 @@ namespace Microsoft.Testing.Extensions.PackagedApp;
+ 
+ internal sealed partial class PackagedAppTestHostLauncher
+ {
+-    // Selects the controller connect-back values, dotnet-test execution identity, TRX/HangDump
++    // Selects the controller connect-back values, dotnet-test execution identity, TRX/HangDump/MSBuild relay
+     // endpoints, and Retry attempt/run correlation metadata that an AUMID-activated host would not
+     // otherwise inherit. Unrelated environment values remain excluded because they can contain user
+     // data or secrets.
+@@ -34,6 +34,7 @@ internal sealed partial class PackagedAppTestHostLauncher
+                 || string.Equals(environmentVariable.Key, AppModelControllerExtensionsEnvironmentVariableName, StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(environmentVariable.Key, TrxTestRunIdEnvironmentVariableName, StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(environmentVariable.Key, TrxPipeEnvironmentVariableName, StringComparison.OrdinalIgnoreCase)
++                || string.Equals(environmentVariable.Key, MSBuildRelayEnvironmentVariableName, StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(environmentVariable.Key, HangDumpPipeEnvironmentVariableName, StringComparison.OrdinalIgnoreCase))
+             {
+                 skipExtensionMarkerIncluded |= string.Equals(
+diff --git a/src/Platform/Microsoft.Testing.Extensions.PackagedApp/PackagedAppTestHostLauncher.cs b/src/Platform/Microsoft.Testing.Extensions.PackagedApp/PackagedAppTestHostLauncher.cs
+index a215b7f..5e95a43 100644
+--- a/src/Platform/Microsoft.Testing.Extensions.PackagedApp/PackagedAppTestHostLauncher.cs
++++ b/src/Platform/Microsoft.Testing.Extensions.PackagedApp/PackagedAppTestHostLauncher.cs
+@@ -90,7 +90,7 @@ internal sealed partial class PackagedAppTestHostLauncher : ITestHostLauncher, I
+     private const string TargetExecutableEnvironmentVariable = "TESTINGPLATFORM_PACKAGEDAPP_TARGET";
+ 
+     // The handoff is an explicit allowlist of protocol metadata: controller connect-back values,
+-    // dotnet-test execution identity, TRX/HangDump pipe endpoints, and Retry attempt/run correlation.
++    // dotnet-test execution identity, TRX/HangDump/MSBuild relay pipe endpoints, and Retry attempt/run correlation.
+     // Some correlation values may be supplied by CI or the user, but arbitrary environment values
+     // remain excluded because broader TESTINGPLATFORM_* values such as inline runsettings can carry secrets.
+     private const string ConnectBackEnvironmentVariablePrefix = "TESTINGPLATFORM_TESTHOSTCONTROLLER_";
+@@ -109,6 +109,7 @@ internal sealed partial class PackagedAppTestHostLauncher : ITestHostLauncher, I
+     private const string AppModelControllerExtensionsEnvironmentVariableName = "MSTEST_APPMODEL_CONTROLLER_EXTENSIONS";
+     private const string TrxTestRunIdEnvironmentVariableName = "TESTINGPLATFORM_TRX_TESTRUN_ID";
+     private const string TrxPipeEnvironmentVariableName = "TRXNAMEDPIPENAME";
++    private const string MSBuildRelayEnvironmentVariableName = "TESTINGPLATFORM_MSBUILD_RELAY_PIPE";
+ #if PACKAGEDAPP_WINRT
+     private const string AppContainerArtifactRootsConfiguredEnvironmentVariableName = "TESTINGPLATFORM_PACKAGEDAPP_APPCONTAINER_ARTIFACT_ROOTS_CONFIGURED";
+     private const string ArtifactPathSourceRootEnvironmentVariableName = "TESTINGPLATFORM_ARTIFACT_PATH_SOURCE_ROOT";
+diff --git a/src/Platform/Microsoft.Testing.Platform/InternalAPI/InternalAPI.Unshipped.txt b/src/Platform/Microsoft.Testing.Platform/InternalAPI/InternalAPI.Unshipped.txt
+index 74c63ea..c0c3d85 100644
+--- a/src/Platform/Microsoft.Testing.Platform/InternalAPI/InternalAPI.Unshipped.txt
++++ b/src/Platform/Microsoft.Testing.Platform/InternalAPI/InternalAPI.Unshipped.txt
+@@ -137,3 +137,4 @@ static Microsoft.Testing.Platform.TestHostOrchestrator.TestHostExecutionOrchestr
+ *REMOVED*Microsoft.Testing.Platform.Services.ClientCapabilitiesService.ClientCapabilitiesService(bool IsStateful) -> void
+ *REMOVED*Microsoft.Testing.Platform.Services.ClientCapabilitiesService.Deconstruct(out bool IsStateful) -> void
+ *REMOVED*Microsoft.Testing.Platform.Services.ClientCapabilitiesService.IsStateful.init -> void
++Microsoft.Testing.Platform.TestHostControllers.TestHostControllersManager.AddObserver<T>(Microsoft.Testing.Platform.Extensions.CompositeExtensionFactory<T!>! factory) -> void
+diff --git a/src/Platform/Microsoft.Testing.Platform/TestHostControllers/TestHostControllersManager.cs b/src/Platform/Microsoft.Testing.Platform/TestHostControllers/TestHostControllersManager.cs
+index 8915061..0a4cf9e 100644
+--- a/src/Platform/Microsoft.Testing.Platform/TestHostControllers/TestHostControllersManager.cs
++++ b/src/Platform/Microsoft.Testing.Platform/TestHostControllers/TestHostControllersManager.cs
+@@ -22,6 +22,7 @@ internal sealed class TestHostControllersManager : ITestHostControllersManager
+     private readonly List<ICompositeExtensionFactory> _testHostLauncherCompositeFactories = [];
+     private readonly List<ICompositeExtensionFactory> _alreadyBuiltServices = [];
+     private readonly List<ICompositeExtensionFactory> _dataConsumersCompositeServiceFactories = [];
++    private readonly List<ICompositeExtensionFactory> _observerFactories = [];
+ 
+     private static void ThrowIfBrowserPlatform()
+     {
+@@ -139,6 +140,23 @@ public void AddDataConsumer<T>(CompositeExtensionFactory<T> compositeServiceFact
+         _factoryOrdering.Add(compositeServiceFactory);
+     }
+ 
++    // Observers participate in an already-required controller without changing an in-process run
++    // into a controller-backed run. Their environment and lifetime roles share one instance.
++    [UnsupportedOSPlatform("browser")]
++    internal void AddObserver<T>(CompositeExtensionFactory<T> factory)
++        where T : class, ITestHostProcessLifetimeHandler, ITestHostEnvironmentVariableProvider
++    {
++        ThrowIfBrowserPlatform();
++        _ = factory ?? throw new ArgumentNullException(nameof(factory));
++        if (_observerFactories.Contains(factory))
++        {
++            throw new ArgumentException(PlatformResources.CompositeServiceFactoryInstanceAlreadyRegistered);
++        }
++
++        _observerFactories.Add(factory);
++        _factoryOrdering.Add(factory);
++    }
++
+     internal async Task<TestHostControllerConfiguration> BuildAsync(ServiceProvider serviceProvider)
+     {
+         List<(IExtension Extension, int RegistrationOrder)> environmentVariableProviders = [];
+@@ -162,6 +180,14 @@ internal async Task<TestHostControllerConfiguration> BuildAsync(ServiceProvider
+             requireProcessRestart = true;
+         }
+ 
++        if (requireProcessRestart)
++        {
++            await ExtensionBuilderHelper.BuildAndRegisterCompositeExtensionsInPlaceAsync<ITestHostProcessLifetimeHandler>(
++                _observerFactories, serviceProvider, lifetimeHandlers, _alreadyBuiltServices, _factoryOrdering).ConfigureAwait(false);
++            await ExtensionBuilderHelper.BuildAndRegisterCompositeExtensionsInPlaceAsync<ITestHostEnvironmentVariableProvider>(
++                _observerFactories, serviceProvider, environmentVariableProviders, _alreadyBuiltServices, _factoryOrdering).ConfigureAwait(false);
++        }
++
+         return new TestHostControllerConfiguration(
+             [.. environmentVariableProviders.OrderBy(x => x.RegistrationOrder).Select(x => (ITestHostEnvironmentVariableProvider)x.Extension)],
+             [.. lifetimeHandlers.OrderBy(x => x.RegistrationOrder).Select(x => (ITestHostProcessLifetimeHandler)x.Extension)],
+diff --git a/test/UnitTests/Microsoft.Testing.Extensions.UnitTests/PackagedAppConnectBackHandshakeTests.cs b/test/UnitTests/Microsoft.Testing.Extensions.UnitTests/PackagedAppConnectBackHandshakeTests.cs
+index 4be5c91..738fd5d 100644
+--- a/test/UnitTests/Microsoft.Testing.Extensions.UnitTests/PackagedAppConnectBackHandshakeTests.cs
++++ b/test/UnitTests/Microsoft.Testing.Extensions.UnitTests/PackagedAppConnectBackHandshakeTests.cs
+@@ -302,6 +302,7 @@ public void GetConnectBackEnvironment_IncludesRetryAttemptAndExcludesUnrelatedVa
+                 ["testingplatform_dotnettest_executionid"] = "execution-id",
+                 ["TESTINGPLATFORM_DOTNETTEST_ATTEMPTNUMBER"] = "2",
+                 ["TRXNAMEDPIPENAME"] = @"LOCAL\trx-pipe",
++                ["TESTINGPLATFORM_MSBUILD_RELAY_PIPE"] = @"LOCAL\msbuild-relay-pipe",
+                 ["TESTINGPLATFORM_HANGDUMP_PIPENAME"] = @"LOCAL\hangdump-pipe",
+                 ["TESTINGPLATFORM_TRX_TESTRUN_ID"] = "trx-run",
+                 ["testingplatform_logical_run_id"] = "logical-run",
+@@ -311,7 +312,7 @@ public void GetConnectBackEnvironment_IncludesRetryAttemptAndExcludesUnrelatedVa
+ 
+         var environment = PackagedAppTestHostLauncher.GetConnectBackEnvironment(context).ToDictionary();
+ 
+-        Assert.HasCount(7, environment);
++        Assert.HasCount(8, environment);
+         Assert.AreEqual("controller-pipe", environment["TESTINGPLATFORM_TESTHOSTCONTROLLER_PIPENAME_1234"]);
+         Assert.AreEqual("execution-id", environment["testingplatform_dotnettest_executionid"]);
+         Assert.HasCount(
+@@ -323,6 +324,7 @@ public void GetConnectBackEnvironment_IncludesRetryAttemptAndExcludesUnrelatedVa
+                     StringComparison.OrdinalIgnoreCase)));
+         Assert.AreEqual("2", environment["TESTINGPLATFORM_DOTNETTEST_ATTEMPTNUMBER"]);
+         Assert.AreEqual(@"LOCAL\trx-pipe", environment["TRXNAMEDPIPENAME"]);
++        Assert.AreEqual(@"LOCAL\msbuild-relay-pipe", environment["TESTINGPLATFORM_MSBUILD_RELAY_PIPE"]);
+         Assert.AreEqual(@"LOCAL\hangdump-pipe", environment["TESTINGPLATFORM_HANGDUMP_PIPENAME"]);
+         Assert.AreEqual("trx-run", environment["TESTINGPLATFORM_TRX_TESTRUN_ID"]);
+         Assert.AreEqual("logical-run", environment["testingplatform_logical_run_id"]);
+diff --git a/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildControllerLifetime.cs b/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildControllerLifetime.cs
+new file mode 100644
+index 0000000..29f4c66
+--- /dev/null
++++ b/src/Platform/Microsoft.Testing.Extensions.MSBuild/MSBuildControllerLifetime.cs
+@@ -0,0 +1,125 @@
++// Copyright (c) Microsoft Corporation. All rights reserved.
++// Licensed under the MIT license. See LICENSE file in the project root for full license information.
++
++using Microsoft.Testing.Extensions.MSBuild.Serializers;
++using Microsoft.Testing.Platform.CommandLine;
++using Microsoft.Testing.Platform.Configurations;
++using Microsoft.Testing.Platform.Extensions;
++using Microsoft.Testing.Platform.Extensions.TestHostControllers;
++using Microsoft.Testing.Platform.Helpers;
++using Microsoft.Testing.Platform.IPC;
++using Microsoft.Testing.Platform.IPC.Models;
++using Microsoft.Testing.Platform.IPC.Serializers;
++using Microsoft.Testing.Platform.Logging;
++using Microsoft.Testing.Platform.TestHostControllers;
++
++namespace Microsoft.Testing.Extensions.MSBuild;
++
++// The controller owns the outer MSBuild connection. Its child uses an independently authorized
++// endpoint, so a sandboxed host never needs access to the full-trust build process's pipe.
++[UnsupportedOSPlatform("browser")]
++internal sealed class MSBuildControllerLifetime : MSBuildLifecycleCallbacksBase, ITestHostProcessLifetimeHandler, ITestHostEnvironmentVariableProvider, IDisposable
++{
++    internal const string PipeEnvironmentVariable = "TESTINGPLATFORM_MSBUILD_RELAY_PIPE";
++
++    private readonly IServiceProvider _serviceProvider;
++    private readonly IEnvironment _environment;
++    private readonly ILogger _logger;
++    private readonly ITask _task;
++    private readonly NamedPipeServerEndpoint _endpoint = NamedPipeServerFactory.CreateEndpoint();
++    private NamedPipeClient? _buildClient;
++    private NamedPipeServer? _hostServer;
++    private Task? _connection;
++    private CancellationToken _cancellationToken;
++
++    public MSBuildControllerLifetime(IServiceProvider serviceProvider, IConfiguration configuration, ICommandLineOptions commandLineOptions,
++        IEnvironment environment, ILoggerFactory loggerFactory, ITask task)
++        : base(configuration, commandLineOptions)
++    {
++        _serviceProvider = serviceProvider;
++        _environment = environment;
++        _logger = loggerFactory.CreateLogger<MSBuildControllerLifetime>();
++        _task = task;
++    }
++
++    public string Uid => nameof(MSBuildControllerLifetime);
++
++    public string DisplayName => nameof(MSBuildControllerLifetime);
++
++    public async Task BeforeTestHostProcessStartAsync(CancellationToken cancellationToken)
++    {
++        _cancellationToken = cancellationToken;
++        try
++        {
++            _buildClient = CreatePipeClient();
++            await _buildClient.ConnectAsync(cancellationToken).TimeoutAfterAsync(TimeoutHelper.DefaultHangTimeSpanTimeout, cancellationToken).ConfigureAwait(false);
++            _hostServer = NamedPipeServerFactory.CreateAndBind(_endpoint, ForwardAsync, _environment, _logger, _task, _serviceProvider, cancellationToken);
++            _hostServer.RegisterSerializer(new ModuleInfoRequestSerializer(), typeof(ModuleInfoRequest));
++            _hostServer.RegisterSerializer(new FailedTestInfoRequestSerializer(), typeof(FailedTestInfoRequest));
++            _hostServer.RegisterSerializer(new RunSummaryInfoRequestSerializer(), typeof(RunSummaryInfoRequest));
++            _hostServer.RegisterSerializer(new VoidResponseSerializer(), typeof(VoidResponse));
++            _connection = _hostServer.WaitConnectionAsync(cancellationToken);
++        }
++        catch (Exception failure)
++        {
++            try
++            {
++                Dispose();
++            }
++            catch (Exception cleanup)
++            {
++                throw new AggregateException(failure, cleanup);
++            }
++
++            throw;
++        }
++    }
++
++    public Task OnTestHostProcessStartedAsync(ITestHostProcessInformation testHostProcessInformation, CancellationToken cancellationToken)
++        => (_connection ?? throw new InvalidOperationException("The MSBuild controller relay was not started."))
++            .TimeoutAfterAsync(TimeoutHelper.DefaultHangTimeSpanTimeout, cancellationToken);
++
++    public Task OnTestHostProcessExitedAsync(ITestHostProcessInformation testHostProcessInformation, CancellationToken cancellationToken)
++        => Task.CompletedTask;
++
++    public Task UpdateAsync(IEnvironmentVariables environmentVariables)
++    {
++        environmentVariables.SetVariable(new EnvironmentVariable(PipeEnvironmentVariable, _endpoint.PipeName, isSecret: false, isLocked: true));
++        return Task.CompletedTask;
++    }
++
++    public Task<ValidationResult> ValidateTestHostEnvironmentVariablesAsync(IReadOnlyEnvironmentVariables environmentVariables)
++        => environmentVariables.TryGetVariable(PipeEnvironmentVariable, out OwnedEnvironmentVariable? value) && value.Value == _endpoint.PipeName
++            ? ValidationResult.ValidTask
++            : Task.FromResult(ValidationResult.Invalid("The MSBuild controller relay pipe was changed or removed."));
++
++    protected override void RegisterAdditionalSerializers(NamedPipeClient pipeClient)
++    {
++        pipeClient.RegisterSerializer(new FailedTestInfoRequestSerializer(), typeof(FailedTestInfoRequest));
++        pipeClient.RegisterSerializer(new RunSummaryInfoRequestSerializer(), typeof(RunSummaryInfoRequest));
++    }
++
++    private async Task<IResponse> ForwardAsync(IRequest request)
++    {
++        NamedPipeClient client = _buildClient ?? throw new InvalidOperationException("The MSBuild connection is not open.");
++        return request switch
++        {
++            ModuleInfoRequest module => await client.RequestReplyAsync<ModuleInfoRequest, VoidResponse>(module, _cancellationToken).ConfigureAwait(false),
++            FailedTestInfoRequest failure => await client.RequestReplyAsync<FailedTestInfoRequest, VoidResponse>(failure, _cancellationToken).ConfigureAwait(false),
++            RunSummaryInfoRequest summary => await client.RequestReplyAsync<RunSummaryInfoRequest, VoidResponse>(summary, _cancellationToken).ConfigureAwait(false),
++            _ => throw new NotSupportedException($"Unsupported MSBuild relay request: {request.GetType().FullName}"),
++        };
++    }
++
++    public void Dispose()
++    {
++        try
++        {
++            _hostServer?.Dispose();
++        }
++        finally
++        {
++            _buildClient?.Dispose();
++        }
++    }
++}
+diff --git a/test/UnitTests/Microsoft.Testing.Platform.UnitTests/TestHostControllers/ControllerObserverTests.cs b/test/UnitTests/Microsoft.Testing.Platform.UnitTests/TestHostControllers/ControllerObserverTests.cs
+new file mode 100644
+index 0000000..27e6cc6
+--- /dev/null
++++ b/test/UnitTests/Microsoft.Testing.Platform.UnitTests/TestHostControllers/ControllerObserverTests.cs
+@@ -0,0 +1,85 @@
++// Copyright (c) Microsoft Corporation. All rights reserved.
++// Licensed under the MIT license. See LICENSE file in the project root for full license information.
++
++using Microsoft.Testing.Platform.Extensions;
++using Microsoft.Testing.Platform.Extensions.TestHostControllers;
++using Microsoft.Testing.Platform.Services;
++using Microsoft.Testing.Platform.TestHostControllers;
++
++using Moq;
++
++namespace Microsoft.Testing.Platform.UnitTests;
++
++[TestClass]
++public sealed class ControllerObserverTests
++{
++    [TestMethod]
++    public async Task ObserverDoesNotActivateAControllerOrConstructItsServices()
++    {
++        TestHostControllersManager manager = new();
++        manager.AddObserver(new CompositeExtensionFactory<Observer>(() => throw new InvalidOperationException("An in-process run must not construct the observer.")));
++
++        TestHostControllerConfiguration configuration = await manager.BuildAsync(new ServiceProvider());
++
++        Assert.IsFalse(configuration.RequireProcessRestart);
++        Assert.IsEmpty(configuration.LifetimeHandlers);
++        Assert.IsEmpty(configuration.EnvironmentVariableProviders);
++    }
++
++    [TestMethod]
++    public async Task RequiredControllerSharesTheObserverAcrossBothRoles()
++    {
++        TestHostControllersManager manager = new();
++        ITestHostProcessLifetimeHandler activator = Mock.Of<ITestHostProcessLifetimeHandler>(handler =>
++            handler.Uid == "activator" && handler.IsEnabledAsync() == Task.FromResult(true));
++        manager.AddProcessLifetimeHandler(_ => activator);
++        Observer observer = new();
++        manager.AddObserver(new CompositeExtensionFactory<Observer>(() => observer));
++
++        TestHostControllerConfiguration configuration = await manager.BuildAsync(new ServiceProvider());
++
++        Assert.IsTrue(configuration.RequireProcessRestart);
++        Assert.AreSequenceEqual([activator, observer], configuration.LifetimeHandlers);
++        Assert.AreSame(observer, Assert.ContainsSingle(configuration.EnvironmentVariableProviders));
++    }
++
++    [TestMethod]
++    public async Task DisabledObserverDoesNotJoinARequiredController()
++    {
++        TestHostControllersManager manager = new();
++        ITestHostProcessLifetimeHandler activator = Mock.Of<ITestHostProcessLifetimeHandler>(handler =>
++            handler.Uid == "activator" && handler.IsEnabledAsync() == Task.FromResult(true));
++        manager.AddProcessLifetimeHandler(_ => activator);
++        manager.AddObserver(new CompositeExtensionFactory<Observer>(() => new Observer(enabled: false)));
++
++        TestHostControllerConfiguration configuration = await manager.BuildAsync(new ServiceProvider());
++
++        Assert.IsTrue(configuration.RequireProcessRestart);
++        Assert.AreSame(activator, Assert.ContainsSingle(configuration.LifetimeHandlers));
++        Assert.IsEmpty(configuration.EnvironmentVariableProviders);
++    }
++
++    [TestMethod]
++    public void DuplicateObserverRegistrationIsRejected()
++    {
++        TestHostControllersManager manager = new();
++        CompositeExtensionFactory<Observer> factory = new(() => new Observer());
++        manager.AddObserver(factory);
++
++        Assert.ThrowsExactly<ArgumentException>(() => manager.AddObserver(factory));
++    }
++
++    private sealed class Observer(bool enabled = true) : ITestHostProcessLifetimeHandler, ITestHostEnvironmentVariableProvider
++    {
++        public string Uid => nameof(Observer);
++        public string Version => "1.0.0";
++        public string DisplayName => nameof(Observer);
++        public string Description => nameof(Observer);
++        public Task<bool> IsEnabledAsync() => Task.FromResult(enabled);
++        public Task BeforeTestHostProcessStartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
++        public Task OnTestHostProcessStartedAsync(ITestHostProcessInformation testHostProcessInformation, CancellationToken cancellationToken) => Task.CompletedTask;
++        public Task OnTestHostProcessExitedAsync(ITestHostProcessInformation testHostProcessInformation, CancellationToken cancellationToken) => Task.CompletedTask;
++        public Task UpdateAsync(IEnvironmentVariables environmentVariables) => Task.CompletedTask;
++        public Task<ValidationResult> ValidateTestHostEnvironmentVariablesAsync(IReadOnlyEnvironmentVariables environmentVariables) => ValidationResult.ValidTask;
++    }
++}

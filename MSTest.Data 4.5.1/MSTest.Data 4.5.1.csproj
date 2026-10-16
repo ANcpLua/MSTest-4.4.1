@@ -1,0 +1,8 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Data</RootNamespace>
+    </PropertyGroup>
+
+
+</Project>

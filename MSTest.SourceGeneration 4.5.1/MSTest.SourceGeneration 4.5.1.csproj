@@ -1,0 +1,16 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.SourceGeneration</RootNamespace>
+        <EnableMSTestSourceGeneration>true</EnableMSTestSourceGeneration>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <!-- The generator reports AOTSG0001 to AOTSG0005 at a location without a syntax tree, which #pragma warning disable does not reach. -->
+        <NoWarn>$(NoWarn);AOTSG0001;AOTSG0002;AOTSG0003;AOTSG0004;AOTSG0005</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\Shared\ChildProcess.cs" Link="Shared\ChildProcess.cs"/>
+        <ProjectReference Include="..\MSTest.SourceGeneration.Library 4.5.1\MSTest.SourceGeneration.Library 4.5.1.csproj"/>
+    </ItemGroup>
+
+</Project>

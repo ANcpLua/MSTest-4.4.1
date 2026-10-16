@@ -1,0 +1,13 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Execution</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\Shared\ChildProcess.cs" Link="Shared\ChildProcess.cs"/>
+        <Content Include="Timeouts/*.json;Timeouts/*.runsettings" CopyToOutputDirectory="PreserveNewest"/>
+        <Compile Include="..\Shared\ExplicitAttribute.cs" Link="Shared\ExplicitAttribute.cs"/>
+    </ItemGroup>
+
+</Project>

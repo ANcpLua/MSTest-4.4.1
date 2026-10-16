@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="MSTest.Packaging.Browser 4.4.1/MSTest.Packaging.Browser 4.4.1.csproj" />
-  <Project Path="MSTest.Platform.Fixed.Browser 4.4.1/MSTest.Platform.Fixed.Browser 4.4.1.csproj" />
+  <Project Path="MSTest.Packaging.Browser 4.5.1/MSTest.Packaging.Browser 4.5.1.csproj" />
+  <Project Path="MSTest.Platform.Fixed.Browser 4.5.1/MSTest.Platform.Fixed.Browser 4.5.1.csproj" />
 </Solution>

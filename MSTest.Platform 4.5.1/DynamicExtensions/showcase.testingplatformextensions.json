@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/testfx/main/docs/testingplatformextensions.schema.json",
+  "extensions": [
+    {
+      "id": "0e0f6a4e-5d0c-4d53-9a0e-6d2f6b8f1c11",
+      "displayName": "Day shift log",
+      "assemblyPath": "extensions/MSTest.Platform.Extension 4.5.1.dll",
+      "typeFullName": "MSTest.Platform.Extension.TestingPlatformBuilderHook"
+    },
+    {
+      "id": "5b0a7c52-1f6e-4a3c-8f55-2a9d3c7e4d22",
+      "displayName": "Night shift log",
+      "assemblyPath": "extensions/MSTest.Platform.Extension 4.5.1.dll",
+      "typeFullName": "MSTest.Platform.Extension.NightShiftHook",
+      "enabled": false
+    }
+  ]
+}

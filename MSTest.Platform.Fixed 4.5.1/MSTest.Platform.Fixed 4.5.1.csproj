@@ -1,0 +1,37 @@
+<Project Sdk="MSTest.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>MSTest.Platform.Fixed</RootNamespace>
+        <GenerateTestingPlatformEntryPoint>false</GenerateTestingPlatformEntryPoint>
+        <NoWarn>$(NoWarn);TPEXP</NoWarn>
+        <EnableMicrosoftTestingExtensionsAzureDevOpsReport>true</EnableMicrosoftTestingExtensionsAzureDevOpsReport>
+        <EnableMicrosoftTestingExtensionsCtrfReport>true</EnableMicrosoftTestingExtensionsCtrfReport>
+        <EnableMicrosoftTestingExtensionsGitHubActionsReport>true</EnableMicrosoftTestingExtensionsGitHubActionsReport>
+        <EnableMicrosoftTestingExtensionsHtmlReport>true</EnableMicrosoftTestingExtensionsHtmlReport>
+        <EnableMicrosoftTestingExtensionsJUnitReport>true</EnableMicrosoftTestingExtensionsJUnitReport>
+        <EnableMicrosoftTestingExtensionsRetry>true</EnableMicrosoftTestingExtensionsRetry>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\Shared\ChildProcess.cs" Link="Shared\ChildProcess.cs"/>
+        <Compile Include="..\Shared\ExplicitAttribute.cs" Link="Shared\ExplicitAttribute.cs"/>
+        <PackageReference Include="Microsoft.Testing.Platform.ServerMode.Client.Sources" Version="2.5.1" PrivateAssets="all"/>
+        <AssemblyMetadata Include="ProjectPath" Value="$(MSBuildProjectFullPath)"/>
+        <AssemblyMetadata Include="LangVersion" Value="$(LangVersion)"/>
+    </ItemGroup>
+
+    <!-- The browser fixture is published and run under Node by BrowserArtifactRunTests. It is not a
+         desktop test module or a project reference in the desktop solution. -->
+    <PropertyGroup>
+        <BrowserProject>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../MSTest.Platform.Fixed.Browser 4.5.1/MSTest.Platform.Fixed.Browser 4.5.1.csproj'))</BrowserProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <AssemblyMetadata Include="BrowserProjectPath" Value="$(BrowserProject)"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(PinnedDotnetRoot)' != ''">
+        <TestingPlatformEnvironmentVariable Include="DOTNET_ROOT" Value="$(PinnedDotnetRoot)"/>
+    </ItemGroup>
+
+</Project>
