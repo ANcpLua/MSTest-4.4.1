@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using MSTest.Platform.Fixed.Warehouse;
 
 namespace MSTest.Platform.Fixed.AzureDevOps;
@@ -46,7 +47,7 @@ public sealed class OutsideCheckoutRunTests
     [TestMethod]
     public void Annotation_in_the_checkout_names_the_file_of_the_test() =>
         Assert.Contains(
-            $"{Issue};sourcepath=MSTest.Platform.Fixed 4.5.1/Warehouse/{nameof(DamagedParcelTests)}.cs;",
+            $"{Issue};sourcepath={ExpectedSourcePath()};",
             _inCheckout.Output);
 
     [TestMethod]
@@ -64,6 +65,19 @@ public sealed class OutsideCheckoutRunTests
         Assert.Contains("failed: 1", _outsideCheckout.Output);
         Assert.AreEqual(2, _outsideCheckout.ExitCode);
         Assert.AreEqual(string.Empty, _outsideCheckout.Error);
+    }
+
+    private static string ExpectedSourcePath([CallerFilePath] string source = "")
+    {
+        var sourceDirectory = Path.GetDirectoryName(source)!;
+        DirectoryInfo? checkout = new(sourceDirectory);
+        while (checkout is not null
+               && !Directory.Exists(Path.Combine(checkout.FullName, ".git"))
+               && !File.Exists(Path.Combine(checkout.FullName, ".git")))
+            checkout = checkout.Parent;
+        Assert.IsNotNull(checkout, "The in-checkout scenario must run from a Git checkout.");
+        var testFile = Path.GetFullPath(Path.Combine(sourceDirectory, "..", "Warehouse", $"{nameof(DamagedParcelTests)}.cs"));
+        return Path.GetRelativePath(checkout.FullName, testFile).Replace(Path.DirectorySeparatorChar, '/');
     }
 
     private static Task<TestApplicationRun> ReportAsync(string application, TestContext testContext) =>

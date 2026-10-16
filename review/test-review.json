@@ -14923,13 +14923,13 @@
       "file": "MSTest.Platform.Fixed 4.5.1/AzureDevOps/OutsideCheckoutRunTests.cs",
       "class": "MSTest.Platform.Fixed.AzureDevOps.OutsideCheckoutRunTests",
       "method": "Annotation_in_the_checkout_names_the_file_of_the_test",
-      "line": 46,
+      "line": 48,
       "inventoryMethod": "Annotation_in_the_checkout_names_the_file_of_the_test",
-      "sourceSha256": "728bc4965a743822df037f2742583d3064be5642228c1fa38da52dafbfb668ba",
-      "bodyAtReview": "[TestMethod]\n    public void Annotation_in_the_checkout_names_the_file_of_the_test() =>\n        Assert.Contains(\n            $\"{Issue};sourcepath=MSTest.Platform.Fixed 4.5.1/Warehouse/{nameof(DamagedParcelTests)}.cs;\",\n            _inCheckout.Output);",
+      "sourceSha256": "49706bcdbf8a2b56f71bff377d89c74721696cc33c1ac94ea7f30ed24e2dae48",
+      "bodyAtReview": "[TestMethod]\n    public void Annotation_in_the_checkout_names_the_file_of_the_test() =>\n        Assert.Contains(\n            $\"{Issue};sourcepath={ExpectedSourcePath()};\",\n            _inCheckout.Output);",
       "oracle": {
-        "assertionSource": "    public void Annotation_in_the_checkout_names_the_file_of_the_test() =>\n        Assert.Contains(\n            $\"{Issue};sourcepath=MSTest.Platform.Fixed 4.5.1/Warehouse/{nameof(DamagedParcelTests)}.cs;\",\n            _inCheckout.Output);",
-        "independentExpectation": "Enclosing source constants, controlled child inputs and helper implementation were read; expected expressions are those shown above.",
+        "assertionSource": "    public void Annotation_in_the_checkout_names_the_file_of_the_test() =>\n        Assert.Contains(\n            $\"{Issue};sourcepath={ExpectedSourcePath()};\",\n            _inCheckout.Output);",
+        "independentExpectation": "Fixture source locates the owning Git root and computes the known child source path independently of reporter output. Exact sourcepath field remains asserted.",
         "parentObservation": null
       },
       "exceptionHandling": "No swallowed failure in this body; explicit exception assertions and helper cleanup examined in source.",
@@ -14945,22 +14945,23 @@
       "grade": "B",
       "disposition": "Pass",
       "findingIds": [],
-      "runtimeVerification": "Not rerun by this read-only review.",
+      "runtimeVerification": "Fresh focused native run: 3/3 passed; artifacts/mstest-wave-20261016/portable-checkout-tests.log.",
       "attributes": [
         "TestMethod"
       ],
       "classAttributes": [
         "TestClass"
-      ]
+      ],
+      "portabilityReview": "Reviewed actual Git-root discovery (directory or worktree marker); exact Azure DevOps source-file annotation remains asserted in root and nested layouts."
     },
     "MSTest.Platform.Fixed 4.5.1/AzureDevOps/OutsideCheckoutRunTests.cs::MSTest.Platform.Fixed.AzureDevOps.OutsideCheckoutRunTests.Annotation_outside_a_checkout_has_the_message_only": {
       "kind": "test_method",
       "file": "MSTest.Platform.Fixed 4.5.1/AzureDevOps/OutsideCheckoutRunTests.cs",
       "class": "MSTest.Platform.Fixed.AzureDevOps.OutsideCheckoutRunTests",
       "method": "Annotation_outside_a_checkout_has_the_message_only",
-      "line": 52,
+      "line": 54,
       "inventoryMethod": "Annotation_outside_a_checkout_has_the_message_only",
-      "sourceSha256": "728bc4965a743822df037f2742583d3064be5642228c1fa38da52dafbfb668ba",
+      "sourceSha256": "49706bcdbf8a2b56f71bff377d89c74721696cc33c1ac94ea7f30ed24e2dae48",
       "bodyAtReview": "[TestMethod]\n    public void Annotation_outside_a_checkout_has_the_message_only()\n    {\n        var issue = Assert.ContainsSingle(_outsideCheckout.Output.Split(Environment.NewLine).Where(static line => line.StartsWith(Issue, StringComparison.Ordinal)));\n\n        Assert.StartsWith($\"{Issue}]\", issue);\n        Assert.Contains(DamagedParcelTests.Damaged, issue);\n    }",
       "oracle": {
         "assertionSource": "    public void Annotation_outside_a_checkout_has_the_message_only()\n    {\n        var issue = Assert.ContainsSingle(_outsideCheckout.Output.Split(Environment.NewLine).Where(static line => line.StartsWith(Issue, StringComparison.Ordinal)));\n\n        Assert.StartsWith($\"{Issue}]\", issue);\n        Assert.Contains(DamagedParcelTests.Damaged, issue);\n    }",
@@ -14981,22 +14982,23 @@
       "grade": "A",
       "disposition": "Pass",
       "findingIds": [],
-      "runtimeVerification": "Not rerun by this read-only review.",
+      "runtimeVerification": "Fresh focused native run: 3/3 passed; artifacts/mstest-wave-20261016/portable-checkout-tests.log.",
       "attributes": [
         "TestMethod"
       ],
       "classAttributes": [
         "TestClass"
-      ]
+      ],
+      "portabilityReview": "Reviewed actual Git-root discovery (directory or worktree marker); exact Azure DevOps source-file annotation remains asserted in root and nested layouts."
     },
     "MSTest.Platform.Fixed 4.5.1/AzureDevOps/OutsideCheckoutRunTests.cs::MSTest.Platform.Fixed.AzureDevOps.OutsideCheckoutRunTests.Run_outside_a_checkout_reports_the_failure_and_ends_normally": {
       "kind": "test_method",
       "file": "MSTest.Platform.Fixed 4.5.1/AzureDevOps/OutsideCheckoutRunTests.cs",
       "class": "MSTest.Platform.Fixed.AzureDevOps.OutsideCheckoutRunTests",
       "method": "Run_outside_a_checkout_reports_the_failure_and_ends_normally",
-      "line": 61,
+      "line": 63,
       "inventoryMethod": "Run_outside_a_checkout_reports_the_failure_and_ends_normally",
-      "sourceSha256": "728bc4965a743822df037f2742583d3064be5642228c1fa38da52dafbfb668ba",
+      "sourceSha256": "49706bcdbf8a2b56f71bff377d89c74721696cc33c1ac94ea7f30ed24e2dae48",
       "bodyAtReview": "[TestMethod]\n    public void Run_outside_a_checkout_reports_the_failure_and_ends_normally()\n    {\n        Assert.Contains(\"failed: 1\", _outsideCheckout.Output);\n        Assert.AreEqual(2, _outsideCheckout.ExitCode);\n        Assert.AreEqual(string.Empty, _outsideCheckout.Error);\n    }",
       "oracle": {
         "assertionSource": "    public void Run_outside_a_checkout_reports_the_failure_and_ends_normally()\n    {\n        Assert.Contains(\"failed: 1\", _outsideCheckout.Output);\n        Assert.AreEqual(2, _outsideCheckout.ExitCode);\n        Assert.AreEqual(string.Empty, _outsideCheckout.Error);\n    }",
@@ -15016,13 +15018,14 @@
       "grade": "A",
       "disposition": "Pass",
       "findingIds": [],
-      "runtimeVerification": "Not rerun by this read-only review.",
+      "runtimeVerification": "Fresh focused native run: 3/3 passed; artifacts/mstest-wave-20261016/portable-checkout-tests.log.",
       "attributes": [
         "TestMethod"
       ],
       "classAttributes": [
         "TestClass"
-      ]
+      ],
+      "portabilityReview": "Reviewed actual Git-root discovery (directory or worktree marker); exact Azure DevOps source-file annotation remains asserted in root and nested layouts."
     },
     "MSTest.Platform.Fixed 4.5.1/Cancellation/ControllerCancellationRunTests.cs::MSTest.Platform.Fixed.Cancellation.ControllerCancellationRunTests.Test_host_cleans_up_before_the_run_ends": {
       "kind": "test_method",
@@ -23212,7 +23215,7 @@
       "kind": "class_fixture",
       "file": "MSTest.Platform.Fixed 4.5.1/AzureDevOps/OutsideCheckoutRunTests.cs",
       "class": "MSTest.Platform.Fixed.AzureDevOps.OutsideCheckoutRunTests",
-      "sourceSha256": "728bc4965a743822df037f2742583d3064be5642228c1fa38da52dafbfb668ba",
+      "sourceSha256": "49706bcdbf8a2b56f71bff377d89c74721696cc33c1ac94ea7f30ed24e2dae48",
       "oracle": "None required in preparation itself; concrete child outcome/file/protocol observations are asserted by this class methods.",
       "exceptionHandling": "Setup exceptions propagate; resources are disposed in class cleanup or local using.",
       "timeStateGlobalDependencies": [
@@ -23230,7 +23233,8 @@
       "findingIds": [],
       "attributes": [
         "TestClass"
-      ]
+      ],
+      "portabilityReview": "Reviewed actual Git-root discovery (directory or worktree marker); exact Azure DevOps source-file annotation remains asserted in root and nested layouts."
     },
     "MSTest.Platform.Fixed 4.5.1/Cancellation/SessionTimeoutRunTests.cs::MSTest.Platform.Fixed.Cancellation.SessionTimeoutRunTests": {
       "kind": "class_fixture",
@@ -23922,6 +23926,7 @@
       "retainedPatch": "patches/mstest-2.5.1-msbuild-trx.patch",
       "installed": false
     },
-    "lastNonBehavioralEdits": "Unused constant visibility, unused linked type and whitespace cleanup compiled in the final zero-warning build; passing behavioral runs retained."
+    "lastNonBehavioralEdits": "Unused constant visibility, unused linked type and whitespace cleanup compiled in the final zero-warning build; passing behavioral runs retained.",
+    "portableCheckout": "Three inside/outside checkout cases passed after deriving the expected annotation path from the actual Git root."
   }
 }
